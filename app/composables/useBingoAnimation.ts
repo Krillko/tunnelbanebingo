@@ -23,12 +23,16 @@ export function useBingoAnimation(stationsSource: MaybeRefOrGetter<Station[]>) {
   const currentHighlight = ref<string | null>(null);
   const winner = ref<Station | null>(null);
   const animationTarget = ref<{ lat: number; lng: number } | null>(null);
-  const { playTick } = useTickSound();
+  const { unlock, playTick } = useTickSound();
 
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
   function startBingo() {
     if (animationState.value !== 'idle') return;
+
+    // Unlock AudioContext synchronously while still in the user-gesture call chain
+    // (Safari blocks audio that starts outside a direct user interaction)
+    unlock();
 
     const eligible = toValue(stationsSource);
     if (!eligible.length) return;
