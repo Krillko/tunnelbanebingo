@@ -57,3 +57,19 @@ The `.pem` files must be in the project root — `nuxt.config.ts` references the
 ## Tailwind v4 Note
 
 `@nuxt/ui` v4 uses Tailwind CSS v4 which requires a CSS entry point. Without `app/assets/css/main.css` importing `tailwindcss` and `@nuxt/ui`, no styles will be applied. Do not use a `tailwind.config.js` — configuration is CSS-based.
+
+## Future: Live Vehicle Positions
+
+The scaffolding for real-time train/tram dots on the map is **already built but inactive**:
+
+- `server/api/vehicles.get.ts` — Nuxt server route that fetches and decodes the GTFS-RT protobuf feed from Trafiklab, returns JSON array of `{ id, lat, lng, routeId }`
+- `app/composables/useVehiclePositions.ts` — polls `/api/vehicles` every 15 s, exposes `vehicles` ref
+- `BingoMap.client.vue` — already accepts a `vehicles` prop and renders small dark dots (radius 4)
+- `app/pages/index.vue` — already calls `useVehiclePositions()` and passes `vehicles` to the map
+
+**To activate:**
+1. Go to [app.trafiklab.se](https://app.trafiklab.se), project 52268
+2. Add the **"GTFS Regional Realtime"** API and generate a key
+3. Add `TRAFIKLAB_API_KEY=your_key` to `.env`
+
+**Blocker:** GitHub Pages is static — it can't run the Nuxt server route. The feature works in local dev (`npm run dev`) but needs real server hosting in production (Vercel, Railway, Render, etc.) where `TRAFIKLAB_API_KEY` is set as an environment variable. Consider migrating from GitHub Pages to Vercel when ready.

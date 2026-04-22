@@ -4,6 +4,9 @@ export default defineNuxtConfig({
   app: {
     baseURL: process.env.NUXT_APP_BASE_URL ?? '/',
   },
+  runtimeConfig: {
+    trafiklabApiKey: process.env.TRAFIKLAB_API_KEY ?? '',
+  },
   devtools: { enabled: true },
   modules: ['@nuxt/ui', '@nuxt/eslint'],
   ssr: false,

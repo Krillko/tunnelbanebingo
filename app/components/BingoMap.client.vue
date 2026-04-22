@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import L from 'leaflet';
 import type { Station, TbanaLine } from '~/types/station';
+import type { Vehicle } from '~/composables/useVehiclePositions';
 import { routes } from '~/data/routes';
 
 const props = defineProps<{
@@ -8,6 +9,7 @@ const props = defineProps<{
   highlightedId: string | null;
   winnerId: string | null;
   animationTarget: { lat: number; lng: number } | null;
+  vehicles: Vehicle[];
 }>();
 
 const emit = defineEmits<{
@@ -34,9 +36,19 @@ function winnerStyle(line: TbanaLine): L.CircleMarkerOptions {
   return { radius: 14, fillColor: LINE_COLORS[line], color: '#FFD700', weight: 4, fillOpacity: 1, interactive: true };
 }
 
+const vehicleStyle: L.CircleMarkerOptions = {
+  radius: 4,
+  fillColor: '#1F2937',
+  color: '#fff',
+  weight: 1.5,
+  fillOpacity: 0.9,
+  interactive: false,
+};
+
 const mapEl = useTemplateRef<HTMLDivElement>('mapEl');
 let map: L.Map;
 const markerMap = new Map<string, L.CircleMarker>();
+const vehicleMarkers = new Map<string, L.CircleMarker>();
 
 onMounted(async() => {
   await nextTick();
@@ -83,6 +95,31 @@ onUnmounted(() => {
   map?.remove();
 });
 
+watch(() => props.vehicles, (newVehicles) => {
+  if (!map) return;
+
+  const seen = new Set<string>();
+
+  newVehicles.forEach(v => {
+    seen.add(v.id);
+    const existing = vehicleMarkers.get(v.id);
+    if (existing) {
+      existing.setLatLng([v.lat, v.lng]);
+    } else {
+      const m = L.circleMarker([v.lat, v.lng], vehicleStyle).addTo(map);
+      vehicleMarkers.set(v.id, m);
+    }
+  });
+
+  // Remove markers for vehicles no longer in the feed
+  vehicleMarkers.forEach((marker, id) => {
+    if (!seen.has(id)) {
+      marker.remove();
+      vehicleMarkers.delete(id);
+    }
+  });
+}, { deep: true });
+
 watch(() => props.highlightedId, (newId, oldId) => {
   if (oldId && oldId !== props.winnerId) {
     const s = props.stations.find(st => st.id === oldId);
@@ -95,7 +132,6 @@ watch(() => props.highlightedId, (newId, oldId) => {
 
 watch(() => props.animationTarget, (target) => {
   if (target) {
-    // Slowly zoom toward the winner while the animation runs — "not all the way"
     map.flyTo([target.lat, target.lng], 12, { duration: 4, easeLinearity: 0.5 });
   }
 });

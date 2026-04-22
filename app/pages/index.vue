@@ -5,6 +5,7 @@ import { useVisitedStations } from '~/composables/useVisitedStations';
 import type { TbanaLine } from '~/types/station';
 
 const { visitedSet, toggle, markVisited } = useVisitedStations();
+const { vehicles } = useVehiclePositions();
 
 const eligibleStations = computed(() => stations.filter(s => !visitedSet.value.has(s.id)));
 
@@ -66,6 +67,7 @@ function addWinnerToVisited() {
         :highlighted-id="currentHighlight"
         :winner-id="winner?.id ?? null"
         :animation-target="animationTarget"
+        :vehicles="vehicles"
         @ready="mapReady = true"
       />
     </div>
