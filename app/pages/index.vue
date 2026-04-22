@@ -18,18 +18,24 @@ const LINE_LABELS: Record<TbanaLine, string> = {
   red: 'Röda linjen',
   green: 'Gröna linjen',
   blue: 'Blå linjen',
+  tvarbanan: 'Tvärbanan',
+  'sparvag-city': 'Spårväg City',
 };
 
 const LINE_COLORS: Record<TbanaLine, string> = {
   red: '#E4000F',
   green: '#00873E',
   blue: '#005DA0',
+  tvarbanan: '#E07B39',
+  'sparvag-city': '#8B5CF6',
 };
 
 const stationsByLine: Record<TbanaLine, typeof stations> = {
   red: stations.filter(s => s.line === 'red'),
   green: stations.filter(s => s.line === 'green'),
   blue: stations.filter(s => s.line === 'blue'),
+  tvarbanan: stations.filter(s => s.line === 'tvarbanan'),
+  'sparvag-city': stations.filter(s => s.line === 'sparvag-city'),
 };
 
 watch(winner, async(w) => {
@@ -188,7 +194,7 @@ function addWinnerToVisited() {
           </p>
         </div>
 
-        <div v-for="line in (['red', 'green', 'blue'] as TbanaLine[])" :key="line">
+        <div v-for="line in (['red', 'green', 'blue', 'tvarbanan', 'sparvag-city'] as TbanaLine[])" :key="line">
           <div class="flex items-center gap-1.5 mb-2">
             <div class="w-3 h-3 rounded-full shrink-0" :style="{ backgroundColor: LINE_COLORS[line] }" />
             <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">{{ LINE_LABELS[line] }}</span>
@@ -210,14 +216,14 @@ function addWinnerToVisited() {
         </div>
       </div>
 
-      <div class="flex gap-3 justify-center pt-2">
+      <div class="flex flex-wrap gap-x-3 gap-y-1 justify-center pt-2">
         <div
           v-for="(color, line) in LINE_COLORS"
           :key="line"
           class="flex items-center gap-1.5"
         >
-          <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: color }" />
-          <span class="text-xs text-gray-500 capitalize">{{ line }}</span>
+          <div class="w-3 h-3 rounded-full shrink-0" :style="{ backgroundColor: color }" />
+          <span class="text-xs text-gray-500">{{ LINE_LABELS[line] }}</span>
         </div>
       </div>
     </div>

@@ -18,6 +18,8 @@ const LINE_COLORS: Record<TbanaLine, string> = {
   red: '#E4000F',
   green: '#00873E',
   blue: '#005DA0',
+  tvarbanan: '#E07B39',
+  'sparvag-city': '#8B5CF6',
 };
 
 function normalStyle(line: TbanaLine): L.CircleMarkerOptions {

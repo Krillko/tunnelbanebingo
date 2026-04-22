@@ -24,4 +24,11 @@ export const routes: Route[] = [
   { line: 'green', stationIds: ['gullmarsplan', 'skarmarbrink', 'hammarbyhojden', 'bjorkhagen', 'karrtorp', 'bagarmossen', 'skarpnack'] },
   { line: 'green', stationIds: ['gullmarsplan', 'blasut', 'sandsborg', 'skogskyrkogarden', 'tallkrogen', 'gubbangen', 'hokarangen', 'fagersjo', 'farsta', 'farsta-strand'] },
   { line: 'green', stationIds: ['gullmarsplan', 'globen', 'enskede-gard', 'sockenplan', 'svedmyra', 'stureby', 'bandhagen', 'hogdalen', 'ragsved', 'hagsatra'] },
+
+  // Tvärbanan — line 30 (Sickla → Solna station) and line 31 (Bromma flygplats → Alviks strand)
+  { line: 'tvarbanan', stationIds: ['sickla', 'sickla-udde', 'sickla-kaj', 'luma', 'martensdal', 'gullmarsplan', 'globen', 'linde', 'valla-torg', 'arstafalt', 'arstaberg', 'arstadal', 'liljeholmen', 'trekanten', 'grondal', 'stora-essingen', 'alviks-strand', 'alvik', 'johannesfred', 'norra-ulvsunda', 'karlsbodavagen', 'ballsta-bro', 'sundbybergs-centrum', 'solna-business-park', 'solna-centrum', 'solna-station'] },
+  { line: 'tvarbanan', stationIds: ['bromma-flygplats', 'bromma-blocks', 'norra-ulvsunda', 'johannesfred', 'alvik', 'alviks-strand'] },
+
+  // Spårväg City — line 7 (T-Centralen → Waldemarsudde)
+  { line: 'sparvag-city', stationIds: ['t-centralen', 'kungstradgarden', 'nybroplan', 'styrmansgatan', 'djurgardsbron', 'nordiska-museet', 'liljevalchs', 'skansen', 'djurgardsskolan', 'waldemarsudde'] },
 ];

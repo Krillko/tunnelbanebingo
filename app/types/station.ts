@@ -1,4 +1,4 @@
-export type TbanaLine = 'red' | 'green' | 'blue';
+export type TbanaLine = 'red' | 'green' | 'blue' | 'tvarbanan' | 'sparvag-city';
 
 export interface Station {
   id: string;
