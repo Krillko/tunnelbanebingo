@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import L from 'leaflet';
 import type { Station, TbanaLine } from '~/types/station';
+import { routes } from '~/data/routes';
 
 const props = defineProps<{
   stations: Station[];
@@ -48,6 +49,22 @@ onMounted(async() => {
     subdomains: 'abcd',
     maxZoom: 19,
   }).addTo(map);
+
+  const stationById = new Map(props.stations.map(s => [s.id, s]));
+  routes.forEach(route => {
+    const coords = route.stationIds
+      .map(id => stationById.get(id))
+      .filter((s): s is Station => !!s)
+      .map(s => [s.lat, s.lng] as [number, number]);
+    if (coords.length >= 2) {
+      L.polyline(coords, {
+        color: LINE_COLORS[route.line],
+        weight: 4,
+        opacity: 0.65,
+        interactive: false,
+      }).addTo(map);
+    }
+  });
 
   props.stations.forEach(station => {
     const marker = L.circleMarker([station.lat, station.lng], normalStyle(station.line));
