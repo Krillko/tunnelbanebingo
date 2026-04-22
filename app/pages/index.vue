@@ -8,7 +8,7 @@ const { visitedSet, toggle, markVisited } = useVisitedStations();
 
 const eligibleStations = computed(() => stations.filter(s => !visitedSet.value.has(s.id)));
 
-const { animationState, currentHighlight, winner, startBingo, reset } = useBingoAnimation(eligibleStations);
+const { animationState, currentHighlight, winner, animationTarget, startBingo, reset } = useBingoAnimation(eligibleStations);
 
 const mapReady = ref(false);
 const activeTab = ref<'bingo' | 'settings'>('bingo');
@@ -59,6 +59,7 @@ function addWinnerToVisited() {
         :stations="stations"
         :highlighted-id="currentHighlight"
         :winner-id="winner?.id ?? null"
+        :animation-target="animationTarget"
         @ready="mapReady = true"
       />
     </div>

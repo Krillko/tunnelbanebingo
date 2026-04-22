@@ -7,6 +7,7 @@ const props = defineProps<{
   stations: Station[];
   highlightedId: string | null;
   winnerId: string | null;
+  animationTarget: { lat: number; lng: number } | null;
 }>();
 
 const emit = defineEmits<{
@@ -90,6 +91,13 @@ watch(() => props.highlightedId, (newId, oldId) => {
   }
 });
 
+watch(() => props.animationTarget, (target) => {
+  if (target) {
+    // Slowly zoom toward the winner while the animation runs — "not all the way"
+    map.flyTo([target.lat, target.lng], 12, { duration: 4, easeLinearity: 0.5 });
+  }
+});
+
 watch(() => props.winnerId, (newId, oldId) => {
   if (oldId) {
     const s = props.stations.find(st => st.id === oldId);
@@ -99,7 +107,7 @@ watch(() => props.winnerId, (newId, oldId) => {
     const s = props.stations.find(st => st.id === newId);
     if (s) {
       markerMap.get(newId)?.setStyle(winnerStyle(s.line));
-      map.flyTo([s.lat, s.lng], 13, { duration: 1.5 });
+      map.flyTo([s.lat, s.lng], 14, { duration: 1.2 });
     }
   } else {
     map.flyTo([59.332, 18.065], 11, { duration: 1 });
