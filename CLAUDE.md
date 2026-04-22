@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Rules
 
 - Always run `nvm use` before any npm/node commands
+- Always run `npx eslint --fix` on changed files after editing code
 - Always allowed to use the Chrome MCP tools (`mcp__claude-in-chrome__*`) to test and verify UI changes in the browser
 
 ## Commands
