@@ -39,13 +39,23 @@ const stationsByLine: Record<TbanaLine, typeof stations> = {
   'sparvag-city': stations.filter(s => s.line === 'sparvag-city'),
 };
 
-watch(winner, async(w) => {
+// Worker-based confetti instance — runs particle physics off the main thread
+// so it doesn't compete with Leaflet's animation frame loop
+let confettiFn: ((opts: object) => void) | null = null;
+async function fire(opts: object) {
+  if (!confettiFn) {
+    const { default: confetti } = await import('canvas-confetti');
+    confettiFn = confetti.create(undefined, { useWorker: true, resize: true });
+  }
+  confettiFn(opts);
+}
+
+watch(winner, (w) => {
   winnerJustAdded.value = false;
   if (!w) return;
-  const { default: confetti } = await import('canvas-confetti');
-  confetti({ particleCount: 160, spread: 80, origin: { y: 0.6 } });
-  setTimeout(() => confetti({ particleCount: 80, spread: 120, origin: { y: 0.5, x: 0.3 } }), 300);
-  setTimeout(() => confetti({ particleCount: 80, spread: 120, origin: { y: 0.5, x: 0.7 } }), 500);
+  fire({ particleCount: 160, spread: 80, origin: { y: 0.6 } });
+  setTimeout(() => fire({ particleCount: 80, spread: 120, origin: { y: 0.5, x: 0.3 } }), 300);
+  setTimeout(() => fire({ particleCount: 80, spread: 120, origin: { y: 0.5, x: 0.7 } }), 500);
 });
 
 function handleReset() {

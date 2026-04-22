@@ -118,7 +118,7 @@ watch(() => props.vehicles, (newVehicles) => {
       vehicleMarkers.delete(id);
     }
   });
-}, { deep: true });
+});
 
 watch(() => props.highlightedId, (newId, oldId) => {
   if (oldId && oldId !== props.winnerId) {
@@ -154,5 +154,8 @@ watch(() => props.winnerId, (newId, oldId) => {
 </script>
 
 <template>
-  <div ref="mapEl" class="w-full h-full" />
+  <div
+    ref="mapEl"
+    class="w-full h-full"
+    style="will-change: transform;" />
 </template>
