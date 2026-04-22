@@ -1,3 +1,5 @@
+import { toValue } from 'vue';
+import type { MaybeRefOrGetter } from 'vue';
 import type { Station } from '~/types/station';
 import { useTickSound } from '~/composables/useTickSound';
 
@@ -10,7 +12,7 @@ function intervalAt(elapsed: number): number {
   return MIN_INTERVAL_MS + (MAX_INTERVAL_MS - MIN_INTERVAL_MS) * (t * t);
 }
 
-export function useBingoAnimation(stations: Station[]) {
+export function useBingoAnimation(stationsSource: MaybeRefOrGetter<Station[]>) {
   const animationState = ref<'idle' | 'spinning' | 'complete'>('idle');
   const currentHighlight = ref<string | null>(null);
   const winner = ref<Station | null>(null);
@@ -21,7 +23,11 @@ export function useBingoAnimation(stations: Station[]) {
   function startBingo() {
     if (animationState.value !== 'idle') return;
 
-    const target = stations[Math.floor(Math.random() * stations.length)];
+    // Snapshot eligible stations at spin time
+    const eligible = toValue(stationsSource);
+    if (!eligible.length) return;
+
+    const target = eligible[Math.floor(Math.random() * eligible.length)]!;
     animationState.value = 'spinning';
     winner.value = null;
 
@@ -43,8 +49,8 @@ export function useBingoAnimation(stations: Station[]) {
 
       let candidate: Station;
       do {
-        candidate = stations[Math.floor(Math.random() * stations.length)];
-      } while (candidate.id === lastId && stations.length > 1);
+        candidate = eligible[Math.floor(Math.random() * eligible.length)]!;
+      } while (candidate.id === lastId && eligible.length > 1);
 
       lastId = candidate.id;
       currentHighlight.value = candidate.id;
