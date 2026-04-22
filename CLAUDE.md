@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Always run `nvm use` before any npm/node commands
 - Always run `npx eslint --fix` on changed files after editing code
 - Always allowed to use the Chrome MCP tools (`mcp__claude-in-chrome__*`) to test and verify UI changes in the browser
+- Never run `git commit` — the user always commits themselves
 
 ## Commands
 
@@ -38,10 +39,12 @@ Path aliases `~` and `@` both resolve to `app/`.
 
 Key files:
 - `app/assets/css/main.css` — Tailwind v4 + Nuxt UI CSS entry point (required for styles to load)
-- `app/data/stations.ts` — all ~90 Stockholm T-bana stations with lat/lng
+- `app/data/stations.ts` — all ~100 Stockholm T-bana stations with OSM-accurate lat/lng, grouped by line
+- `app/data/routes.ts` — ordered station ID arrays per branch, used to draw polylines on the map
 - `app/components/BingoMap.client.vue` — Leaflet map, `.client.vue` suffix prevents SSR
-- `app/composables/useBingoAnimation.ts` — slot-machine animation state machine
-- `app/composables/useTickSound.ts` — Web Audio API casino tick sounds
+- `app/composables/useBingoAnimation.ts` — slot-machine animation state machine (pre-picks winner, quadratic ease-out over 4s)
+- `app/composables/useTickSound.ts` — Web Audio API casino tick sounds (no audio files, oscillator-based)
+- `app/pages/index.vue` — main page: flex layout with map + sidebar, three states (idle/spinning/winner)
 
 ## HTTPS / Dev Server
 
