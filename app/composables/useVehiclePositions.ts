@@ -9,6 +9,9 @@ const POLL_INTERVAL_MS = 15_000;
 
 export function useVehiclePositions() {
   const vehicles = ref<Vehicle[]>([]);
+  const { trafiklabEnabled } = useRuntimeConfig().public;
+
+  if (!trafiklabEnabled) return { vehicles };
 
   async function refresh() {
     try {

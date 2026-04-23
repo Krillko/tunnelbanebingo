@@ -18,6 +18,13 @@ const eligibleStations = computed(() =>
 const { animationState, currentHighlight, winner, animationTarget, startBingo, reset } =
   useBingoAnimation(eligibleStations, homeStationId);
 
+const { venues, loading: venuesLoading, fetchVenues, clear: clearVenues } = useNearbyVenues();
+
+watch(winner, (w) => {
+  if (w) fetchVenues(w.lat, w.lng);
+  else clearVenues();
+});
+
 type HomeSelectItem = { label: string; value: string };
 const homeStationSelectItems = stations
   .slice()
@@ -241,6 +248,25 @@ function addWinnerToVisited() {
               >
                 {{ LINE_LABELS[winner.line] }}
               </span>
+
+              <div v-if="venuesLoading || venues.length" class="mt-3 pt-3 border-t border-gray-100">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                  Nära stationen
+                </p>
+                <div v-if="venuesLoading" class="text-xs text-gray-400">
+                  Letar efter ställen…
+                </div>
+                <div v-else class="flex flex-col gap-1.5">
+                  <div
+                    v-for="venue in venues"
+                    :key="venue.id"
+                    class="flex items-center justify-between gap-2 text-sm"
+                  >
+                    <span class="truncate text-gray-800">{{ venue.name }}</span>
+                    <span class="shrink-0 text-xs text-gray-400">{{ venue.distanceM }} m</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <UButton

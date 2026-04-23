@@ -6,6 +6,9 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     trafiklabApiKey: process.env.TRAFIKLAB_API_KEY ?? '',
+    public: {
+      trafiklabEnabled: !!process.env.TRAFIKLAB_API_KEY,
+    },
   },
   devtools: { enabled: true },
   modules: ['@nuxt/ui', '@nuxt/eslint'],
