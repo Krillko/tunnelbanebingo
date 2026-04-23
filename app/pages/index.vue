@@ -196,7 +196,23 @@ const isDark = computed(() => colorMode.value === 'dark');
       :close="false"
     >
       <template #body>
-        <p class="text-sm text-gray-500 dark:text-gray-400">
+        <div class="flex justify-end -mt-1 mb-3">
+          <UButton
+            size="xs"
+            variant="ghost"
+            color="neutral"
+            @click="toggleLocale"
+          >
+            {{ locale === 'sv' ? '🇸🇪' : '🇬🇧' }}
+          </UButton>
+        </div>
+        <p class="text-sm text-gray-700 dark:text-gray-300">
+          {{ t('onboarding.intro') }}
+        </p>
+        <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 mt-5">
+          {{ t('onboarding.homeStationTitle') }}
+        </p>
+        <p class="text-sm text-gray-700 dark:text-gray-300 mt-1">
           {{ t('onboarding.description') }}
         </p>
         <USelectMenu

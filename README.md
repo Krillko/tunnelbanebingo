@@ -1,4 +1,4 @@
-# Tunnelbana Bingo
+# TunnelbaneBingo
 
 A Stockholm subway bingo game. Hit the button, watch a casino-style animation randomly pick a T-bana station, then go visit it.
 

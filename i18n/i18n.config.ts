@@ -7,7 +7,9 @@ export default defineI18nConfig(() => ({
         signInGoogle: 'Logga in med Google',
       },
       onboarding: {
-        title: 'Välj din hemstation',
+        title: 'Välkommen till Tunnelbanebingo',
+        intro: 'Här slumpar vi fram en station du inte varit på än. Perfekt om du vill besöka alla stationer och ta en öl eller kaffe i närheten.',
+        homeStationTitle: 'Välj din hemmastation',
         description: 'Stationer nära hemmet lottas oftare — långt bort är fortfarande möjligt, bara ovanligare. Du kan ändra detta när som helst i Inställningar.',
         stationPlaceholder: 'Sök station…',
         includeRailways: 'Inkludera spårvägar (Tvärbanan & Spårväg City)',
@@ -15,11 +17,11 @@ export default defineI18nConfig(() => ({
         skip: 'Gör det senare (i Inställningar)',
       },
       tabs: {
-        bingo: 'Bingo',
+        bingo: 'Slumpa',
         settings: 'Inställningar',
       },
       bingo: {
-        button: '🎰 Bingo!',
+        button: '🎰 Slumpa!',
         loadingMap: 'Laddar karta...',
         allVisited: 'Alla stationer är besökta! Avmarkera i Inställningar.',
         spinning: 'Drar lott...',
@@ -55,6 +57,9 @@ export default defineI18nConfig(() => ({
         tvarbanan: 'Tvärbanan',
         sparvagCity: 'Spårväg City',
       },
+      meta: {
+        description: 'Slumpa fram en station på Stockholms tunnelbana som du inte besökt än. Perfekt för att utforska staden ett stopp i taget.',
+      },
       footer: {
         about: 'Om appen & datakällor',
       },
@@ -68,7 +73,7 @@ export default defineI18nConfig(() => ({
       about: {
         back: '← Tillbaka',
         title: 'Om appen',
-        intro: 'Tunnelbana Bingo är ett hobbyprojekt för dig som vill utforska Stockholms kollektivtrafik.',
+        intro: 'TunnelbaneBingo är ett hobbyprojekt för dig som vill utforska Stockholms kollektivtrafik.',
         dataSources: 'Datakällor',
         stationData: 'Stationsdata',
         stationDataText: 'Stationsnamn och koordinater för tunnelbana, Tvärbanan och Spårväg City är sammanställda manuellt från {osm}.',
@@ -86,7 +91,9 @@ export default defineI18nConfig(() => ({
         signInGoogle: 'Sign in with Google',
       },
       onboarding: {
-        title: 'Choose your home station',
+        title: 'Welcome to Subway Bingo',
+        intro: 'We randomly pick a station you haven\'t visited yet. Perfect if you want to visit all stations and grab a beer or coffee nearby.',
+        homeStationTitle: 'Choose your home station',
         description: 'Stations near home are drawn more often — far-away stations are still possible, just less likely. You can change this any time in Settings.',
         stationPlaceholder: 'Search station…',
         includeRailways: 'Include trams (Tvärbanan & Spårväg City)',
@@ -94,11 +101,11 @@ export default defineI18nConfig(() => ({
         skip: 'Do this later (in Settings)',
       },
       tabs: {
-        bingo: 'Bingo',
+        bingo: 'Randomize',
         settings: 'Settings',
       },
       bingo: {
-        button: '🎰 Bingo!',
+        button: '🎰 Randomize!',
         loadingMap: 'Loading map...',
         allVisited: 'All stations visited! Uncheck some in Settings.',
         spinning: 'Drawing...',
@@ -134,6 +141,9 @@ export default defineI18nConfig(() => ({
         tvarbanan: 'Tvärbanan',
         sparvagCity: 'Spårväg City',
       },
+      meta: {
+        description: 'Spin a random Stockholm metro station you haven\'t visited yet. Perfect for exploring the city one stop at a time.',
+      },
       footer: {
         about: 'About & data sources',
       },
@@ -147,7 +157,7 @@ export default defineI18nConfig(() => ({
       about: {
         back: '← Back',
         title: 'About',
-        intro: 'Tunnelbana Bingo is a hobby project for those who want to explore Stockholm\'s public transport.',
+        intro: 'TunnelbaneBingo is a hobby project for those who want to explore Stockholm\'s public transport.',
         dataSources: 'Data sources',
         stationData: 'Station data',
         stationDataText: 'Station names and coordinates for the metro, Tvärbanan and Spårväg City were manually compiled from {osm}.',
