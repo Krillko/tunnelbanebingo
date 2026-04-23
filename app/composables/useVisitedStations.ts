@@ -8,28 +8,28 @@ function loadFromStorage(): string[] {
   }
 }
 
+const _visitedIds = ref<string[]>(loadFromStorage());
+const visitedSet = computed(() => new Set(_visitedIds.value));
+
+function persist() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(_visitedIds.value));
+}
+
 export function useVisitedStations() {
-  const visitedIds = ref<string[]>(loadFromStorage());
-  const visitedSet = computed(() => new Set(visitedIds.value));
-
-  function persist() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(visitedIds.value));
-  }
-
   function toggle(id: string) {
-    const next = new Set(visitedIds.value);
+    const next = new Set(_visitedIds.value);
     if (next.has(id)) {
       next.delete(id);
     } else {
       next.add(id);
     }
-    visitedIds.value = [...next];
+    _visitedIds.value = [...next];
     persist();
   }
 
   function markVisited(id: string) {
     if (visitedSet.value.has(id)) return;
-    visitedIds.value = [...visitedIds.value, id];
+    _visitedIds.value = [..._visitedIds.value, id];
     persist();
   }
 

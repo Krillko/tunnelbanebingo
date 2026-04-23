@@ -8,6 +8,7 @@ export default defineNuxtConfig({
     trafiklabApiKey: process.env.TRAFIKLAB_API_KEY ?? '',
     public: {
       trafiklabEnabled: !!process.env.TRAFIKLAB_API_KEY,
+      googleClientId: process.env.GOOGLE_CLIENT_ID ?? '',
     },
   },
   devtools: { enabled: true },

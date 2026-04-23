@@ -1,18 +1,10 @@
 const STORAGE_KEY = 'tunnelbanebingo-home';
 
-function loadFromStorage(): string | null {
-  try {
-    return localStorage.getItem(STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
+const _homeStationId = ref<string | null>(localStorage.getItem(STORAGE_KEY));
 
 export function useHomeStation() {
-  const homeStationId = ref<string | null>(loadFromStorage());
-
   function setHome(id: string | null): void {
-    homeStationId.value = id;
+    _homeStationId.value = id;
     if (id === null) {
       localStorage.removeItem(STORAGE_KEY);
     } else {
@@ -20,5 +12,5 @@ export function useHomeStation() {
     }
   }
 
-  return { homeStationId: readonly(homeStationId), setHome };
+  return { homeStationId: readonly(_homeStationId), setHome };
 }

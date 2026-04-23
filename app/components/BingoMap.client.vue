@@ -10,6 +10,7 @@ const props = defineProps<{
   winnerId: string | null;
   animationTarget: { lat: number; lng: number } | null;
   vehicles: Vehicle[];
+  tramsIncluded: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -41,10 +42,13 @@ const vehicleStyle: L.CircleMarkerOptions = {
   interactive: false,
 };
 
+const TRAM_LINES = new Set<TbanaLine>(['tvarbanan', 'sparvag-city']);
+
 const mapEl = useTemplateRef<HTMLDivElement>('mapEl');
 let map: L.Map;
 const markerMap = new Map<string, L.CircleMarker>();
 const vehicleMarkers = new Map<string, L.CircleMarker>();
+const tramPolylines: L.Polyline[] = [];
 
 onMounted(async() => {
   await nextTick();
@@ -68,23 +72,45 @@ onMounted(async() => {
       .filter((s): s is Station => !!s)
       .map(s => [s.lat, s.lng] as [number, number]);
     if (coords.length >= 2) {
-      L.polyline(coords, {
+      const polyline = L.polyline(coords, {
         color: LINE_COLORS[route.line],
         weight: 4,
         opacity: 0.65,
         interactive: false,
-      }).addTo(map);
+      });
+      if (TRAM_LINES.has(route.line)) {
+        tramPolylines.push(polyline);
+        if (props.tramsIncluded) polyline.addTo(map);
+      } else {
+        polyline.addTo(map);
+      }
     }
   });
 
   props.stations.forEach(station => {
     const marker = L.circleMarker([station.lat, station.lng], normalStyle(station.line));
     marker.bindTooltip(station.name, { permanent: false, direction: 'top', offset: [0, -8] });
-    marker.addTo(map);
     markerMap.set(station.id, marker);
+    if (!TRAM_LINES.has(station.line) || props.tramsIncluded) {
+      marker.addTo(map);
+    }
   });
 
   emit('ready');
+});
+
+watch(() => props.tramsIncluded, (included) => {
+  if (!map) return;
+  props.stations.filter(s => TRAM_LINES.has(s.line)).forEach(s => {
+    const marker = markerMap.get(s.id);
+    if (!marker) return;
+    if (included) marker.addTo(map);
+    else marker.remove();
+  });
+  tramPolylines.forEach(poly => {
+    if (included) poly.addTo(map);
+    else poly.remove();
+  });
 });
 
 onUnmounted(() => {

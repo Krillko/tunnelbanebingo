@@ -9,10 +9,17 @@ import type { TbanaLine } from '~/types/station';
 const { visitedSet, toggle, markVisited } = useVisitedStations();
 const { homeStationId, setHome } = useHomeStation();
 const { hasOnboarded, markOnboarded } = useOnboarding();
+const { tramsIncluded, setTramsIncluded } = useTramsIncluded();
 const { vehicles } = useVehiclePositions();
 
+const TRAM_LINES = new Set(['tvarbanan', 'sparvag-city']);
+
 const eligibleStations = computed(() =>
-  stations.filter(s => !visitedSet.value.has(s.id) && s.id !== homeStationId.value)
+  stations.filter(s =>
+    !visitedSet.value.has(s.id) &&
+    s.id !== homeStationId.value &&
+    (tramsIncluded.value || !TRAM_LINES.has(s.line))
+  )
 );
 
 const { animationState, currentHighlight, winner, animationTarget, startBingo, reset } =
@@ -71,6 +78,10 @@ const LINE_COLORS: Record<TbanaLine, string> = {
   'sparvag-city': '#8B5CF6',
 };
 
+const METRO_LINES = ['red', 'green', 'blue'] as const;
+const TRAM_LINES_LIST = ['tvarbanan', 'sparvag-city'] as const;
+const ALL_LINES = [...METRO_LINES, ...TRAM_LINES_LIST] as TbanaLine[];
+
 const stationsByLine: Record<TbanaLine, typeof stations> = {
   red: stations.filter(s => s.line === 'red'),
   green: stations.filter(s => s.line === 'green'),
@@ -78,6 +89,14 @@ const stationsByLine: Record<TbanaLine, typeof stations> = {
   tvarbanan: stations.filter(s => s.line === 'tvarbanan'),
   'sparvag-city': stations.filter(s => s.line === 'sparvag-city'),
 };
+
+const visibleLines = computed<TbanaLine[]>(() =>
+  tramsIncluded.value ? ALL_LINES : [...METRO_LINES]
+);
+
+const visibleStations = computed(() =>
+  stations.filter(s => tramsIncluded.value || !TRAM_LINES.has(s.line))
+);
 
 // Worker-based confetti instance — runs particle physics off the main thread
 // so it doesn't compete with Leaflet's animation frame loop
@@ -107,6 +126,27 @@ function addWinnerToVisited() {
   markVisited(winner.value.id);
   winnerJustAdded.value = true;
 }
+
+const { cloudSyncAvailable, signedInEmail, syncStatus, lastSyncedAt, syncError, signInWithGoogle, syncNow, debouncedSync, signOut } = useCloudSync();
+
+const showCloudDialog = ref(false);
+const cloudPrompted = ref(!!localStorage.getItem('tunnelbanebingo-cloud-prompted'));
+
+watch(() => visitedSet.value.size, (newSize, oldSize) => {
+  if (newSize === 1 && (oldSize ?? 0) === 0 && !cloudPrompted.value && !signedInEmail.value && cloudSyncAvailable.value) {
+    showCloudDialog.value = true;
+    cloudPrompted.value = true;
+    localStorage.setItem('tunnelbanebingo-cloud-prompted', '1');
+  }
+});
+
+watch([visitedSet, homeStationId, tramsIncluded], () => {
+  debouncedSync();
+});
+
+const lastSyncedText = computed(() =>
+  lastSyncedAt.value?.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' }) ?? null
+);
 </script>
 
 <template>
@@ -129,6 +169,12 @@ function addWinnerToVisited() {
           placeholder="Sök station…"
           class="mt-3 w-full"
         />
+        <UCheckbox
+          :model-value="tramsIncluded"
+          label="Inkludera spårvägar (Tvärbanan & Spårväg City)"
+          class="mt-4"
+          @update:model-value="setTramsIncluded"
+        />
       </template>
       <template #footer>
         <div class="flex flex-col gap-2 w-full">
@@ -150,6 +196,8 @@ function addWinnerToVisited() {
         </div>
       </template>
     </UModal>
+    <CloudSyncDialog v-if="cloudSyncAvailable" v-model:open="showCloudDialog" />
+
     <div class="flex-1 min-h-0 min-h-[50vh] md:min-h-0">
       <BingoMap
         :stations="stations"
@@ -157,6 +205,7 @@ function addWinnerToVisited() {
         :winner-id="winner?.id ?? null"
         :animation-target="animationTarget"
         :vehicles="vehicles"
+        :trams-included="tramsIncluded"
         @ready="mapReady = true"
       />
     </div>
@@ -320,17 +369,101 @@ function addWinnerToVisited() {
 
         <USeparator />
 
+        <!-- Cloud sync section — only shown when GOOGLE_CLIENT_ID is configured -->
+        <template v-if="cloudSyncAvailable">
+          <div>
+            <p class="text-sm font-medium text-gray-900">
+              Molnsynk
+            </p>
+
+            <!-- Not signed in -->
+            <template v-if="!signedInEmail">
+              <p class="text-xs text-gray-500 mt-0.5">
+                Spara dina stationer i Google Drive och synka mellan enheter.
+              </p>
+              <UButton
+                size="sm"
+                variant="outline"
+                leading-icon="i-logos-google-icon"
+                class="mt-2"
+                :loading="syncStatus === 'signing-in' || syncStatus === 'syncing'"
+                @click="signInWithGoogle"
+              >
+                Logga in med Google
+              </UButton>
+              <p v-if="syncError" class="text-xs text-red-500 mt-1.5">
+                {{ syncError }}
+              </p>
+            </template>
+
+            <!-- Syncing -->
+            <template v-else-if="syncStatus === 'syncing'">
+              <div class="flex items-center gap-1.5 mt-1.5 text-xs text-gray-500">
+                <UIcon name="i-heroicons-arrow-path" class="animate-spin size-3 shrink-0" />
+                Synkar…
+              </div>
+            </template>
+
+            <!-- Signed in -->
+            <template v-else>
+              <p class="text-xs text-gray-500 mt-0.5 truncate">
+                {{ signedInEmail }}
+              </p>
+              <p v-if="lastSyncedText" class="text-xs text-gray-400 mt-0.5">
+                Senast synkat: {{ lastSyncedText }}
+              </p>
+              <p v-if="syncError" class="text-xs text-red-500 mt-0.5">
+                {{ syncError }}
+              </p>
+              <div class="flex gap-2 mt-2">
+                <UButton
+                  size="xs"
+                  variant="outline"
+                  @click="syncNow">
+                  Synka nu
+                </UButton>
+                <UButton
+                  size="xs"
+                  variant="ghost"
+                  color="neutral"
+                  @click="signOut">
+                  Logga ut
+                </UButton>
+              </div>
+            </template>
+          </div>
+
+          <USeparator />
+        </template>
+
+        <div>
+          <p class="text-sm font-medium text-gray-900">
+            Spårvägar
+          </p>
+          <p class="text-xs text-gray-500 mt-0.5">
+            Inkludera Tvärbanan och Spårväg City i lottningen.
+          </p>
+          <UCheckbox
+            :model-value="tramsIncluded"
+            label="Inkludera spårvägar"
+            class="mt-2"
+            @update:model-value="setTramsIncluded"
+          />
+        </div>
+
+        <USeparator />
+
         <div>
           <p class="text-sm font-medium text-gray-900">
             Besökta stationer
           </p>
           <p class="text-xs text-gray-500 mt-0.5">
             Besökta stationer utesluts ur lottningen.
-            {{ visitedSet.size }} av {{ stations.length }} besökta.
+            {{ visibleStations.filter(s => visitedSet.has(s.id)).length }} av {{ visibleStations.length }} besökta.
           </p>
         </div>
 
-        <div v-for="line in (['red', 'green', 'blue', 'tvarbanan', 'sparvag-city'] as TbanaLine[])" :key="line">
+        <div v-for="line in visibleLines" :key="line">
           <div class="flex items-center gap-1.5 mb-2">
             <div class="w-3 h-3 rounded-full shrink-0" :style="{ backgroundColor: LINE_COLORS[line] }" />
             <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">{{ LINE_LABELS[line] }}</span>
