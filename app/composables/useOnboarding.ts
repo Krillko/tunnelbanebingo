@@ -1,10 +1,21 @@
-const STORAGE_KEY = 'tunnelbanebingo-onboarded';
+const LEGACY_KEY = 'tunnelbanebingo-onboarded';
 
-export function useOnboarding() {
-  const hasOnboarded = ref<boolean>(!!localStorage.getItem(STORAGE_KEY));
+function storageKey(cityId: string) {
+  return `tunnelbanebingo-onboarded-${cityId}`;
+}
+
+export function useOnboarding(cityId = 'stockholm') {
+  function checkStorage(): boolean {
+    if (localStorage.getItem(storageKey(cityId))) return true;
+    // Migrate Stockholm from legacy keyless storage
+    if (cityId === 'stockholm' && localStorage.getItem(LEGACY_KEY)) return true;
+    return false;
+  }
+
+  const hasOnboarded = ref<boolean>(checkStorage());
 
   function markOnboarded(): void {
-    localStorage.setItem(STORAGE_KEY, '1');
+    localStorage.setItem(storageKey(cityId), '1');
     hasOnboarded.value = true;
   }
 

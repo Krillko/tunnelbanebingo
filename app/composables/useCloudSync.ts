@@ -1,7 +1,15 @@
+import type { CityId } from '~/types/city';
+
 const CONNECTED_KEY = 'tunnelbanebingo-cloud-connected';
 const EMAIL_KEY = 'tunnelbanebingo-cloud-email';
 
-interface CloudState {
+interface CityData {
+  visited: string[];
+  homeStation: string | null;
+  tramsIncluded: boolean;
+}
+
+interface CloudStateV1 {
   schemaVersion: 1;
   updatedAt: string;
   visited: string[];
@@ -9,13 +17,19 @@ interface CloudState {
   tramsIncluded: boolean;
 }
 
-// Singleton state shared across all callers
+interface CloudStateV2 {
+  schemaVersion: 2;
+  updatedAt: string;
+  cities: Partial<Record<CityId, CityData>>;
+}
+
+type CloudState = CloudStateV1 | CloudStateV2;
+
 const signedInEmail = ref<string | null>(localStorage.getItem(EMAIL_KEY));
 const syncStatus = ref<'idle' | 'signing-in' | 'syncing' | 'synced' | 'error'>('idle');
 const lastSyncedAt = ref<Date | null>(null);
 const syncError = ref<string | null>(null);
 
-// Internal state — not reactive, managed manually
 let _accessToken: string | null = null;
 let _tokenExpiresAt = 0;
 let _fileId: string | null = null;
@@ -96,7 +110,7 @@ async function downloadState(token: string): Promise<CloudState | null> {
   return resp.json() as Promise<CloudState>;
 }
 
-async function uploadState(token: string, state: CloudState): Promise<void> {
+async function uploadState(token: string, state: CloudStateV2): Promise<void> {
   const id = await getFileId(token);
   const boundary = 'bingo_boundary';
   const meta = id ? '{}' : JSON.stringify({ name: 'bingo-state.json', parents: ['appDataFolder'] });
@@ -141,36 +155,6 @@ async function fetchEmail(token: string): Promise<string> {
   return data.user.emailAddress ?? 'Google-konto';
 }
 
-function buildSnapshot(
-  visitedSet: Set<string>,
-  homeStationId: string | null,
-  tramsIncluded: boolean
-): CloudState {
-  return {
-    schemaVersion: 1,
-    updatedAt: new Date().toISOString(),
-    visited: [...visitedSet],
-    homeStation: homeStationId,
-    tramsIncluded,
-  };
-}
-
-function applyCloudState(
-  cloud: CloudState,
-  markVisited: (id: string) => void,
-  visitedSet: Set<string>,
-  homeStationId: string | null,
-  setHome: (id: string | null) => void,
-  tramsIncluded: boolean,
-  setTramsIncluded: (v: boolean) => void
-) {
-  cloud.visited.forEach(id => {
-    if (!visitedSet.has(id)) markVisited(id);
-  });
-  if (cloud.homeStation !== homeStationId) setHome(cloud.homeStation);
-  if (cloud.tramsIncluded !== tramsIncluded) setTramsIncluded(cloud.tramsIncluded);
-}
-
 function setError(msg: string) {
   syncStatus.value = 'error';
   syncError.value = msg;
@@ -179,9 +163,65 @@ function setError(msg: string) {
 export function useCloudSync() {
   const config = useRuntimeConfig();
   const cloudSyncAvailable = computed(() => !!config.public.googleClientId);
-  const { visitedSet, markVisited } = useVisitedStations();
-  const { homeStationId, setHome } = useHomeStation();
-  const { tramsIncluded, setTramsIncluded } = useTramsIncluded();
+
+  const stk = {
+    visited: useVisitedStations('stockholm'),
+    home: useHomeStation('stockholm'),
+    trams: useTramsIncluded('stockholm'),
+  };
+  const gbg = {
+    visited: useVisitedStations('gothenburg'),
+    home: useHomeStation('gothenburg'),
+    trams: useTramsIncluded('gothenburg'),
+  };
+
+  function buildSnapshot(): CloudStateV2 {
+    return {
+      schemaVersion: 2,
+      updatedAt: new Date().toISOString(),
+      cities: {
+        stockholm: {
+          visited: [...stk.visited.visitedSet.value],
+          homeStation: stk.home.homeStationId.value,
+          tramsIncluded: stk.trams.tramsIncluded.value,
+        },
+        gothenburg: {
+          visited: [...gbg.visited.visitedSet.value],
+          homeStation: gbg.home.homeStationId.value,
+          tramsIncluded: gbg.trams.tramsIncluded.value,
+        },
+      },
+    };
+  }
+
+  function applyCloudState(cloud: CloudState) {
+    if (cloud.schemaVersion === 1) {
+      // Migrate V1 (Stockholm-only) to V2
+      cloud.visited.forEach(id => {
+        if (!stk.visited.visitedSet.value.has(id)) stk.visited.markVisited(id);
+      });
+      if (cloud.homeStation !== stk.home.homeStationId.value) stk.home.setHome(cloud.homeStation);
+      if (cloud.tramsIncluded !== stk.trams.tramsIncluded.value) stk.trams.setTramsIncluded(cloud.tramsIncluded);
+      return;
+    }
+
+    const stkData = cloud.cities.stockholm;
+    if (stkData) {
+      stkData.visited.forEach(id => {
+        if (!stk.visited.visitedSet.value.has(id)) stk.visited.markVisited(id);
+      });
+      if (stkData.homeStation !== stk.home.homeStationId.value) stk.home.setHome(stkData.homeStation);
+      if (stkData.tramsIncluded !== stk.trams.tramsIncluded.value) stk.trams.setTramsIncluded(stkData.tramsIncluded);
+    }
+
+    const gbgData = cloud.cities.gothenburg;
+    if (gbgData) {
+      gbgData.visited.forEach(id => {
+        if (!gbg.visited.visitedSet.value.has(id)) gbg.visited.markVisited(id);
+      });
+      if (gbgData.homeStation !== gbg.home.homeStationId.value) gbg.home.setHome(gbgData.homeStation);
+    }
+  }
 
   async function signInWithGoogle(): Promise<void> {
     syncStatus.value = 'signing-in';
@@ -194,19 +234,9 @@ export function useCloudSync() {
       syncStatus.value = 'syncing';
 
       const cloud = await downloadState(token);
-      if (cloud) {
-        applyCloudState(
-          cloud,
-          markVisited,
-          visitedSet.value,
-          homeStationId.value,
-          setHome,
-          tramsIncluded.value,
-          setTramsIncluded
-        );
-      }
+      if (cloud) applyCloudState(cloud);
 
-      await uploadState(token, buildSnapshot(visitedSet.value, homeStationId.value, tramsIncluded.value));
+      await uploadState(token, buildSnapshot());
 
       const email = await fetchEmail(token);
       signedInEmail.value = email;
@@ -234,7 +264,7 @@ export function useCloudSync() {
     syncError.value = null;
     try {
       const token = await acquireToken();
-      await uploadState(token, buildSnapshot(visitedSet.value, homeStationId.value, tramsIncluded.value));
+      await uploadState(token, buildSnapshot());
       lastSyncedAt.value = new Date();
       syncStatus.value = 'synced';
     } catch {

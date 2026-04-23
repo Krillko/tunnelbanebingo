@@ -6,6 +6,16 @@ export default defineI18nConfig(() => ({
         subtitle: 'Slumpa en station på Stockholms tunnelbana / Spårvägar',
         signInGoogle: 'Logga in med Google',
       },
+      cities: {
+        stockholm: {
+          title: 'Tunnelbana Bingo',
+          subtitle: 'Slumpa en station på Stockholms tunnelbana / Spårvägar',
+        },
+        gothenburg: {
+          title: 'Spårvagnsbingo',
+          subtitle: 'Slumpa en spårvagnshållplats i Göteborg',
+        },
+      },
       onboarding: {
         title: 'Välkommen till Tunnelbanebingo',
         intro: 'Här slumpar vi fram en station du inte varit på än. Perfekt om du vill besöka alla stationer och ta en öl eller kaffe i närheten.',
@@ -51,11 +61,24 @@ export default defineI18nConfig(() => ({
         visitedCount: '{visited} av {total} besökta.',
       },
       lines: {
-        red: 'Röda linjen',
-        green: 'Gröna linjen',
-        blue: 'Blå linjen',
-        tvarbanan: 'Tvärbanan',
-        sparvagCity: 'Spårväg City',
+        stockholm: {
+          red: 'Röda linjen',
+          green: 'Gröna linjen',
+          blue: 'Blå linjen',
+          tvarbanan: 'Tvärbanan',
+          sparvagCity: 'Spårväg City',
+        },
+        gothenburg: {
+          line1: 'Linje 1',
+          line2: 'Linje 2',
+          line3: 'Linje 3',
+          line4: 'Linje 4',
+          line5: 'Linje 5',
+          line6: 'Linje 6',
+          line7: 'Linje 7',
+          line9: 'Linje 9',
+          line11: 'Linje 11',
+        },
       },
       meta: {
         description: 'Slumpa fram en station på Stockholms tunnelbana som du inte besökt än. Perfekt för att utforska staden ett stopp i taget.',
@@ -89,6 +112,16 @@ export default defineI18nConfig(() => ({
       app: {
         subtitle: 'Spin a random station on Stockholm\'s metro / tram network',
         signInGoogle: 'Sign in with Google',
+      },
+      cities: {
+        stockholm: {
+          title: 'Subway Bingo',
+          subtitle: 'Spin a random station on Stockholm\'s metro / tram network',
+        },
+        gothenburg: {
+          title: 'Tram Bingo',
+          subtitle: 'Spin a random tram stop in Gothenburg',
+        },
       },
       onboarding: {
         title: 'Welcome to Subway Bingo',
@@ -135,11 +168,24 @@ export default defineI18nConfig(() => ({
         visitedCount: '{visited} of {total} visited.',
       },
       lines: {
-        red: 'Red line',
-        green: 'Green line',
-        blue: 'Blue line',
-        tvarbanan: 'Tvärbanan',
-        sparvagCity: 'Spårväg City',
+        stockholm: {
+          red: 'Red line',
+          green: 'Green line',
+          blue: 'Blue line',
+          tvarbanan: 'Tvärbanan',
+          sparvagCity: 'Spårväg City',
+        },
+        gothenburg: {
+          line1: 'Line 1',
+          line2: 'Line 2',
+          line3: 'Line 3',
+          line4: 'Line 4',
+          line5: 'Line 5',
+          line6: 'Line 6',
+          line7: 'Line 7',
+          line9: 'Line 9',
+          line11: 'Line 11',
+        },
       },
       meta: {
         description: 'Spin a random Stockholm metro station you haven\'t visited yet. Perfect for exploring the city one stop at a time.',

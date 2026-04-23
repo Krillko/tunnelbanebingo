@@ -2,12 +2,10 @@ import { toValue } from 'vue';
 import type { MaybeRefOrGetter } from 'vue';
 import type { Station } from '~/types/station';
 import { useTickSound } from '~/composables/useTickSound';
-import { travelTimesFrom } from '~/utils/travelTime';
 
 const TOTAL_DURATION_MS = 4000;
 const MIN_INTERVAL_MS = 60;
 const MAX_INTERVAL_MS = 600;
-// Exponential decay time constant in minutes — controls how steeply weight falls off with distance
 const DECAY_TAU = 20;
 
 function intervalAt(elapsed: number): number {
@@ -42,7 +40,8 @@ function pickTarget(eligible: Station[], times: Map<string, number> | null): Sta
 
 export function useBingoAnimation(
   stationsSource: MaybeRefOrGetter<Station[]>,
-  homeStationIdSource: MaybeRefOrGetter<string | null> = () => null
+  homeStationIdSource: MaybeRefOrGetter<string | null> = () => null,
+  travelTimesFromFn?: (id: string) => Map<string, number>,
 ) {
   const animationState = ref<'idle' | 'spinning' | 'complete'>('idle');
   const currentHighlight = ref<string | null>(null);
@@ -54,24 +53,20 @@ export function useBingoAnimation(
 
   const travelTimes = computed<Map<string, number> | null>(() => {
     const homeId = toValue(homeStationIdSource);
-    if (!homeId) return null;
-    const result = travelTimesFrom(homeId);
+    if (!homeId || !travelTimesFromFn) return null;
+    const result = travelTimesFromFn(homeId);
     return result.size > 0 ? result : null;
   });
 
   function startBingo() {
     if (animationState.value !== 'idle') return;
 
-    // Unlock AudioContext synchronously while still in the user-gesture call chain
-    // (Safari blocks audio that starts outside a direct user interaction)
     unlock();
 
     const eligible = toValue(stationsSource);
     if (!eligible.length) return;
 
     const target = pickTarget(eligible, travelTimes.value);
-
-    // Pre-sort by proximity so we can narrow the pool cheaply on each tick
     const byDistance = [...eligible].sort((a, b) => sqDist(a, target) - sqDist(b, target));
 
     animationState.value = 'spinning';
@@ -95,7 +90,6 @@ export function useBingoAnimation(
         return;
       }
 
-      // Shrink the pool toward the closest stations as the animation progresses
       const poolSize = Math.max(3, Math.round(eligible.length * (1 - t * 0.85)));
       const pool = byDistance.slice(0, poolSize);
 

@@ -1,5 +1,7 @@
 import type { Station } from '~/types/station';
 
+// ─── Stockholm ───────────────────────────────────────────────────────────────
+
 const blueStations: Station[] = [
   // Shared trunk: Kungsträdgården → Solna centrum
   { id: 'kungstradgarden', name: 'Kungsträdgården', lat: 59.3308, lng: 18.0711, line: 'blue' },
@@ -124,9 +126,7 @@ const greenStations: Station[] = [
 ];
 
 // Tvärbanan (light rail, lines 30 and 31)
-// Shared stops with T-bana (alvik, liljeholmen, gullmarsplan, globen, sundbybergs-centrum, solna-centrum) are omitted to avoid duplicates
 const tvarbananaStations: Station[] = [
-  // Line 30: Sickla → Solna station
   { id: 'sickla', name: 'Sickla', lat: 59.306855, lng: 18.120768, line: 'tvarbanan' },
   { id: 'sickla-udde', name: 'Sickla udde', lat: 59.306290, lng: 18.108543, line: 'tvarbanan' },
   { id: 'sickla-kaj', name: 'Sickla kaj', lat: 59.302626, lng: 18.103391, line: 'tvarbanan' },
@@ -147,13 +147,11 @@ const tvarbananaStations: Station[] = [
   { id: 'ballsta-bro', name: 'Bällsta bro', lat: 59.360844, lng: 17.963531, line: 'tvarbanan' },
   { id: 'solna-business-park', name: 'Solna Business Park', lat: 59.359652, lng: 17.979139, line: 'tvarbanan' },
   { id: 'solna-station', name: 'Solna station', lat: 59.363863, lng: 18.008508, line: 'tvarbanan' },
-  // Line 31 unique stops: Bromma flygplats branch
   { id: 'bromma-flygplats', name: 'Bromma flygplats', lat: 59.357027, lng: 17.946746, line: 'tvarbanan' },
   { id: 'bromma-blocks', name: 'Bromma Blocks', lat: 59.353822, lng: 17.956965, line: 'tvarbanan' },
 ];
 
 // Spårväg City (tram line 7, T-Centralen → Waldemarsudde)
-// T-Centralen and Kungsträdgården already exist in T-bana stations
 const sparvagstyraStations: Station[] = [
   { id: 'nybroplan', name: 'Nybroplan', lat: 59.332694, lng: 18.076602, line: 'sparvag-city' },
   { id: 'styrmansgatan', name: 'Styrmansgatan', lat: 59.331444, lng: 18.084029, line: 'sparvag-city' },
@@ -165,4 +163,183 @@ const sparvagstyraStations: Station[] = [
   { id: 'waldemarsudde', name: 'Waldemarsudde', lat: 59.322646, lng: 18.111260, line: 'sparvag-city' },
 ];
 
-export const stations: Station[] = [...blueStations, ...redStations, ...greenStations, ...tvarbananaStations, ...sparvagstyraStations];
+export const stockholmStations: Station[] = [
+  ...blueStations,
+  ...redStations,
+  ...greenStations,
+  ...tvarbananaStations,
+  ...sparvagstyraStations,
+];
+
+// ─── Gothenburg ───────────────────────────────────────────────────────────────
+// Each stop is assigned to its primary line (lowest-numbered line that serves it).
+// All stops are uniquely listed here; route polylines may reference any stop ID.
+
+const gbgLine1Stations: Station[] = [
+  { id: 'gbg-opaltorget', name: 'Opaltorget', lat: 57.642929, lng: 11.900071, line: 'gbg-1' },
+  { id: 'gbg-smaragdgatan', name: 'Smaragdgatan', lat: 57.6452838, lng: 11.8992279, line: 'gbg-1' },
+  { id: 'gbg-briljantgatan', name: 'Briljantgatan', lat: 57.6486751, lng: 11.9035015, line: 'gbg-1' },
+  { id: 'gbg-frolunda-torg', name: 'Frölunda Torg', lat: 57.6527721, lng: 11.9116038, line: 'gbg-1' },
+  { id: 'gbg-positivgatan', name: 'Positivgatan', lat: 57.6566434, lng: 11.9175089, line: 'gbg-1' },
+  { id: 'gbg-musikvagen', name: 'Musikvägen', lat: 57.6589341, lng: 11.9204561, line: 'gbg-1' },
+  { id: 'gbg-nymilsgatan', name: 'Nymilsgatan', lat: 57.6624732, lng: 11.9250576, line: 'gbg-1' },
+  { id: 'gbg-lantmilsgatan', name: 'Lantmilsgatan', lat: 57.6668624, lng: 11.9248261, line: 'gbg-1' },
+  { id: 'gbg-axel-dahlstroms-torg', name: 'Axel Dahlströms torg', lat: 57.6723825, lng: 11.9278338, line: 'gbg-1' },
+  { id: 'gbg-marklandsgatan', name: 'Marklandsgatan', lat: 57.6744604, lng: 11.9362415, line: 'gbg-1' },
+  { id: 'gbg-botaniska-tradgarden', name: 'Botaniska Trädgården', lat: 57.6812619, lng: 11.9455821, line: 'gbg-1' },
+  { id: 'gbg-linneplatsen', name: 'Linnéplatsen', lat: 57.6901338, lng: 11.9520488, line: 'gbg-1' },
+  { id: 'gbg-olivedalsgatan', name: 'Olivedalsgatan', lat: 57.6924153, lng: 11.9525896, line: 'gbg-1' },
+  { id: 'gbg-prinsgatan', name: 'Prinsgatan', lat: 57.6968874, lng: 11.9512499, line: 'gbg-1' },
+  { id: 'gbg-jarntorget', name: 'Järntorget', lat: 57.6999594, lng: 11.9530791, line: 'gbg-1' },
+  { id: 'gbg-stenpiren', name: 'Stenpiren', lat: 57.7059606, lng: 11.9580454, line: 'gbg-1' },
+  { id: 'gbg-brunnsparken', name: 'Brunnsparken', lat: 57.7065914, lng: 11.9688473, line: 'gbg-1' },
+  { id: 'gbg-drottningtorget', name: 'Drottningtorget', lat: 57.7075969, lng: 11.9735271, line: 'gbg-1' },
+  { id: 'gbg-ullevi-norra', name: 'Ullevi Norra', lat: 57.7080639, lng: 11.9861801, line: 'gbg-1' },
+  { id: 'gbg-svingeln', name: 'Svingeln', lat: 57.713358, lng: 11.9917409, line: 'gbg-1' },
+  { id: 'gbg-olskrokstorget', name: 'Olskrokstorget', lat: 57.7146502, lng: 11.9993711, line: 'gbg-1' },
+  { id: 'gbg-redbergsplatsen', name: 'Redbergsplatsen', lat: 57.7163354, lng: 12.0051702, line: 'gbg-1' },
+  { id: 'gbg-stockholmsgatan', name: 'Stockholmsgatan', lat: 57.7170967, lng: 12.0140855, line: 'gbg-1' },
+  { id: 'gbg-harlanda', name: 'Härlanda', lat: 57.7181866, lng: 12.0199724, line: 'gbg-1' },
+  { id: 'gbg-munkebackstorget', name: 'Munkebäckstorget', lat: 57.718568, lng: 12.0263497, line: 'gbg-1' },
+  { id: 'gbg-kaggeledstorget', name: 'Kaggeledstorget', lat: 57.722895, lng: 12.0332249, line: 'gbg-1' },
+  { id: 'gbg-tingvallsvagen', name: 'Tingvallsvägen', lat: 57.7247084, lng: 12.0417585, line: 'gbg-1' },
+  { id: 'gbg-ostra-sjukhuset', name: 'Östra Sjukhuset', lat: 57.722586, lng: 12.047442, line: 'gbg-1' },
+];
+
+const gbgLine2Stations: Station[] = [
+  { id: 'gbg-seminariegatan', name: 'Seminariegatan', lat: 57.6923509, lng: 11.9575419, line: 'gbg-2' },
+  { id: 'gbg-brunnsgatan', name: 'Brunnsgatan', lat: 57.693785, lng: 11.959526, line: 'gbg-2' },
+  { id: 'gbg-handelshogskolan', name: 'Handelshögskolan', lat: 57.696179, lng: 11.9624549, line: 'gbg-2' },
+  { id: 'gbg-vasa-viktoriagatan', name: 'Vasa Viktoriagatan', lat: 57.6981715, lng: 11.9669504, line: 'gbg-2' },
+  { id: 'gbg-vasaplatsen', name: 'Vasaplatsen', lat: 57.6994174, lng: 11.9693282, line: 'gbg-2' },
+  { id: 'gbg-gronsakstorget', name: 'Grönsakstorget', lat: 57.7024564, lng: 11.9649857, line: 'gbg-2' },
+  { id: 'gbg-domkyrkan', name: 'Domkyrkan', lat: 57.7043165, lng: 11.9637167, line: 'gbg-2' },
+  { id: 'gbg-nils-ericsonsplatsen', name: 'Nils Ericsonsplatsen', lat: 57.7093126, lng: 11.9710133, line: 'gbg-2' },
+  { id: 'gbg-frihamnen', name: 'Frihamnen', lat: 57.7203339, lng: 11.9601168, line: 'gbg-2' },
+  { id: 'gbg-hjalmar-brantingsplatsen', name: 'Hjalmar Brantingsplatsen', lat: 57.7205954, lng: 11.9532604, line: 'gbg-2' },
+  { id: 'gbg-vagmastareplatsen', name: 'Vågmästareplatsen', lat: 57.7205725, lng: 11.9451473, line: 'gbg-2' },
+  { id: 'gbg-wieselgrensplatsen', name: 'Wieselgrensplatsen', lat: 57.7206418, lng: 11.9356288, line: 'gbg-2' },
+  { id: 'gbg-rambergsvallen', name: 'Rambergsvallen', lat: 57.7195189, lng: 11.9277024, line: 'gbg-2' },
+  { id: 'gbg-gropegardsgatan', name: 'Gropegårdsgatan', lat: 57.7183442, lng: 11.9191511, line: 'gbg-2' },
+  { id: 'gbg-eketragatan', name: 'Eketrägatan', lat: 57.7167011, lng: 11.9101366, line: 'gbg-2' },
+  { id: 'gbg-salofjordsgatan', name: 'Sälöfjordsgatan', lat: 57.7134933, lng: 11.9015894, line: 'gbg-2' },
+  { id: 'gbg-varvaderstorget', name: 'Vårväderstorget', lat: 57.7129636, lng: 11.8931812, line: 'gbg-2' },
+  { id: 'gbg-mildvadersgatan', name: 'Mildvädersgatan', lat: 57.7155501, lng: 11.8909961, line: 'gbg-2' },
+  { id: 'gbg-onskevadersgatan', name: 'Önskevädersgatan', lat: 57.7201505, lng: 11.8930502, line: 'gbg-2' },
+  { id: 'gbg-friskvaderstorget', name: 'Friskväderstorget', lat: 57.7233637, lng: 11.8933238, line: 'gbg-2' },
+  { id: 'gbg-vaderilsgatan', name: 'Väderilsgatan', lat: 57.7267621, lng: 11.8934391, line: 'gbg-2' },
+];
+
+const gbgLine3Stations: Station[] = [
+  { id: 'gbg-virginsgatan', name: 'Virginsgatan', lat: 57.7107856, lng: 12.0235253, line: 'gbg-3' },
+  { id: 'gbg-solrosgatan', name: 'Solrosgatan', lat: 57.7165013, lng: 12.0251095, line: 'gbg-3' },
+  { id: 'gbg-kungsportsplatsen', name: 'Kungsportsplatsen', lat: 57.7039668, lng: 11.9697972, line: 'gbg-3' },
+  { id: 'gbg-valand', name: 'Valand', lat: 57.7004526, lng: 11.9736913, line: 'gbg-3' },
+  { id: 'gbg-hagakyrkan', name: 'Hagakyrkan', lat: 57.6996437, lng: 11.9624545, line: 'gbg-3' },
+  { id: 'gbg-masthuggstorget', name: 'Masthuggstorget', lat: 57.6993282, lng: 11.9426724, line: 'gbg-3' },
+  { id: 'gbg-stigbergstorget', name: 'Stigbergstorget', lat: 57.699039, lng: 11.9338853, line: 'gbg-3' },
+  { id: 'gbg-kaptensgatan', name: 'Kaptensgatan', lat: 57.6971859, lng: 11.9276919, line: 'gbg-3' },
+  { id: 'gbg-chapmans-torg', name: 'Chapmans Torg', lat: 57.6942497, lng: 11.9193533, line: 'gbg-3' },
+  { id: 'gbg-j-gerdorffsplatsen', name: 'Jægerdorffsplatsen', lat: 57.6914175, lng: 11.91499, line: 'gbg-3' },
+  { id: 'gbg-vagnhallen-majorna', name: 'Vagnhallen Majorna', lat: 57.6889761, lng: 11.9126923, line: 'gbg-3' },
+  { id: 'gbg-ostindiegatan', name: 'Ostindiegatan', lat: 57.6878362, lng: 11.9150836, line: 'gbg-3' },
+  { id: 'gbg-mariaplan', name: 'Mariaplan', lat: 57.6867412, lng: 11.9207548, line: 'gbg-3' },
+  { id: 'gbg-godhemsgatan', name: 'Godhemsgatan', lat: 57.6845048, lng: 11.9259303, line: 'gbg-3' },
+  { id: 'gbg-klintens-vag', name: 'Klintens Väg', lat: 57.6824578, lng: 11.9279564, line: 'gbg-3' },
+  { id: 'gbg-hogsbogatan', name: 'Högsbogatan', lat: 57.6801215, lng: 11.9302815, line: 'gbg-3' },
+  { id: 'gbg-bokekullsgatan', name: 'Bokekullsgatan', lat: 57.6771253, lng: 11.9327977, line: 'gbg-3' },
+];
+
+const gbgLine4Stations: Station[] = [
+  { id: 'gbg-molndals-innerstad', name: 'Mölndals Innerstad', lat: 57.6560881, lng: 12.0172243, line: 'gbg-4' },
+  { id: 'gbg-molndals-sjukhus', name: 'Mölndals sjukhus', lat: 57.6614548, lng: 12.0136632, line: 'gbg-4' },
+  { id: 'gbg-lackareback', name: 'Lackarebäck', lat: 57.6651824, lng: 12.0118863, line: 'gbg-4' },
+  { id: 'gbg-krokslatts-fabriker', name: 'Krokslätts Fabriker', lat: 57.6720686, lng: 12.0099724, line: 'gbg-4' },
+  { id: 'gbg-krokslatts-torg', name: 'Krokslätts torg', lat: 57.6753924, lng: 12.0078652, line: 'gbg-4' },
+  { id: 'gbg-lana', name: 'Lana', lat: 57.6780259, lng: 12.004441, line: 'gbg-4' },
+  { id: 'gbg-varbergsgatan', name: 'Varbergsgatan', lat: 57.6796154, lng: 12.0030599, line: 'gbg-4' },
+  { id: 'gbg-elisedal', name: 'Elisedal', lat: 57.6834396, lng: 12.0004371, line: 'gbg-4' },
+  { id: 'gbg-almedal', name: 'Almedal', lat: 57.6867861, lng: 11.9974999, line: 'gbg-4' },
+  { id: 'gbg-liseberg-sodra', name: 'Liseberg Södra', lat: 57.6916821, lng: 11.9921031, line: 'gbg-4' },
+  { id: 'gbg-berzeliigatan', name: 'Berzeliigatan', lat: 57.6986577, lng: 11.981542, line: 'gbg-4' },
+  { id: 'gbg-gamlestads-torg', name: 'Gamlestads Torg', lat: 57.7275931, lng: 12.0044754, line: 'gbg-4' },
+  { id: 'gbg-hjallbo', name: 'Hjällbo', lat: 57.7692595, lng: 12.0223783, line: 'gbg-4' },
+  { id: 'gbg-hammarkullen', name: 'Hammarkullen', lat: 57.7796924, lng: 12.0364998, line: 'gbg-4' },
+  { id: 'gbg-storas', name: 'Storås', lat: 57.7849634, lng: 12.0463093, line: 'gbg-4' },
+  { id: 'gbg-angered-centrum', name: 'Angered Centrum', lat: 57.7956033, lng: 12.0492714, line: 'gbg-4' },
+];
+
+const gbgLine5Stations: Station[] = [
+  { id: 'gbg-welandergatan', name: 'Welandergatan', lat: 57.7060773, lng: 12.0239131, line: 'gbg-5' },
+  { id: 'gbg-topelsgatan', name: 'Töpelsgatan', lat: 57.7025157, lng: 12.0224734, line: 'gbg-5' },
+  { id: 'gbg-bogatan', name: 'Bögatan', lat: 57.7011187, lng: 12.016452, line: 'gbg-5' },
+  { id: 'gbg-ekmanska', name: 'Ekmanska', lat: 57.6996668, lng: 12.0096351, line: 'gbg-5' },
+  { id: 'gbg-sankt-sigfrids-plan', name: 'Sankt Sigfrids Plan', lat: 57.6986136, lng: 11.9992078, line: 'gbg-5' },
+  { id: 'gbg-liseberg-station', name: 'Liseberg Station', lat: 57.6975236, lng: 11.9938309, line: 'gbg-5' },
+  { id: 'gbg-korsvagen', name: 'Korsvägen', lat: 57.6968324, lng: 11.9863037, line: 'gbg-5' },
+  { id: 'gbg-lilla-bommen', name: 'Lilla Bommen', lat: 57.7092219, lng: 11.9667699, line: 'gbg-5' },
+  { id: 'gbg-temperaturgatan', name: 'Temperaturgatan', lat: 57.7325718, lng: 11.8952747, line: 'gbg-5' },
+  { id: 'gbg-varmfrontsgatan', name: 'Varmfrontsgatan', lat: 57.7368794, lng: 11.8966544, line: 'gbg-5' },
+];
+
+const gbgLine6Stations: Station[] = [
+  { id: 'gbg-aprilgatan', name: 'Aprilgatan', lat: 57.7608937, lng: 12.0410207, line: 'gbg-6' },
+  { id: 'gbg-allhelgonakyrkan', name: 'Allhelgonakyrkan', lat: 57.7572713, lng: 12.0372348, line: 'gbg-6' },
+  { id: 'gbg-kortedala-torg', name: 'Kortedala Torg', lat: 57.7529122, lng: 12.0331078, line: 'gbg-6' },
+  { id: 'gbg-runstavsgatan', name: 'Runstavsgatan', lat: 57.748042, lng: 12.0303317, line: 'gbg-6' },
+  { id: 'gbg-nymanegatan', name: 'Nymånegatan', lat: 57.7425552, lng: 12.0297833, line: 'gbg-6' },
+  { id: 'gbg-bevaringsgatan', name: 'Beväringsgatan', lat: 57.7399617, lng: 12.0286261, line: 'gbg-6' },
+  { id: 'gbg-kviberg', name: 'Kviberg', lat: 57.736484, lng: 12.0264064, line: 'gbg-6' },
+  { id: 'gbg-bellevue', name: 'Bellevue', lat: 57.7322694, lng: 12.0238706, line: 'gbg-6' },
+  { id: 'gbg-skf', name: 'SKF', lat: 57.7292315, lng: 12.0137267, line: 'gbg-6' },
+  { id: 'gbg-ejdergatan', name: 'Ejdergatan', lat: 57.7208253, lng: 12.0058409, line: 'gbg-6' },
+  { id: 'gbg-ullevi-sodra', name: 'Ullevi Södra', lat: 57.7039541, lng: 11.9850022, line: 'gbg-6' },
+  { id: 'gbg-scandinavium', name: 'Scandinavium', lat: 57.7003947, lng: 11.9858686, line: 'gbg-6' },
+  { id: 'gbg-chalmers', name: 'Chalmers', lat: 57.689904, lng: 11.9726412, line: 'gbg-6' },
+  { id: 'gbg-wavrinskys-plats', name: 'Wavrinskys Plats', lat: 57.6889682, lng: 11.968195, line: 'gbg-6' },
+  { id: 'gbg-medicinaregatan', name: 'Medicinaregatan', lat: 57.6852715, lng: 11.9641644, line: 'gbg-6' },
+  { id: 'gbg-sahlgrenska-huvudentre', name: 'Sahlgrenska Huvudentré', lat: 57.6836795, lng: 11.9614653, line: 'gbg-6' },
+];
+
+const gbgLine7Stations: Station[] = [
+  { id: 'gbg-komettorget', name: 'Komettorget', lat: 57.7511423, lng: 12.0713114, line: 'gbg-7' },
+  { id: 'gbg-rymdtorget', name: 'Rymdtorget', lat: 57.7557468, lng: 12.0669149, line: 'gbg-7' },
+  { id: 'gbg-teleskopgatan', name: 'Teleskopgatan', lat: 57.7593069, lng: 12.0600746, line: 'gbg-7' },
+  { id: 'gbg-galileis-gata', name: 'Galileis Gata', lat: 57.7605102, lng: 12.0516912, line: 'gbg-7' },
+  { id: 'gbg-januarigatan', name: 'Januarigatan', lat: 57.7603496, lng: 12.0412752, line: 'gbg-7' },
+  { id: 'gbg-kapellplatsen', name: 'Kapellplatsen', lat: 57.6927695, lng: 11.9735487, line: 'gbg-7' },
+];
+
+const gbgLine9Stations: Station[] = [
+  { id: 'gbg-sannaplan', name: 'Sannaplan', lat: 57.684194, lng: 11.9164755, line: 'gbg-9' },
+  { id: 'gbg-sandarna', name: 'Sandarna', lat: 57.682819, lng: 11.9098416, line: 'gbg-9' },
+  { id: 'gbg-kungssten', name: 'Kungssten', lat: 57.6805538, lng: 11.901761, line: 'gbg-9' },
+];
+
+const gbgLine11Stations: Station[] = [
+  { id: 'gbg-fjallgatan', name: 'Fjällgatan', lat: 57.6941944, lng: 11.9362536, line: 'gbg-11' },
+  { id: 'gbg-majvallen', name: 'Majvallen', lat: 57.6910747, lng: 11.935553, line: 'gbg-11' },
+  { id: 'gbg-ekedal', name: 'Ekedal', lat: 57.6863608, lng: 11.9276735, line: 'gbg-11' },
+  { id: 'gbg-nya-varvsallen', name: 'Nya Varvsallén', lat: 57.6778774, lng: 11.8946559, line: 'gbg-11' },
+  { id: 'gbg-hagen', name: 'Hagen', lat: 57.6748588, lng: 11.8841839, line: 'gbg-11' },
+  { id: 'gbg-tranered', name: 'Tranered', lat: 57.6725083, lng: 11.8794745, line: 'gbg-11' },
+  { id: 'gbg-karingberget', name: 'Käringberget', lat: 57.6695317, lng: 11.8720126, line: 'gbg-11' },
+  { id: 'gbg-hinsholmen', name: 'Hinsholmen', lat: 57.6678877, lng: 11.860756, line: 'gbg-11' },
+  { id: 'gbg-langedrag', name: 'Långedrag', lat: 57.6681317, lng: 11.8535293, line: 'gbg-11' },
+  { id: 'gbg-saltholmen', name: 'Saltholmen', lat: 57.6606627, lng: 11.8464671, line: 'gbg-11' },
+];
+
+export const gothenburgStations: Station[] = [
+  ...gbgLine1Stations,
+  ...gbgLine2Stations,
+  ...gbgLine3Stations,
+  ...gbgLine4Stations,
+  ...gbgLine5Stations,
+  ...gbgLine6Stations,
+  ...gbgLine7Stations,
+  ...gbgLine9Stations,
+  ...gbgLine11Stations,
+];
+
+// For backwards compatibility
+export const stations = stockholmStations;

@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import L from 'leaflet';
-import type { Station, TbanaLine } from '~/types/station';
+import type { Station } from '~/types/station';
 import type { Vehicle } from '~/composables/useVehiclePositions';
-import { routes } from '~/data/routes';
+import type { Route } from '~/data/routes';
 
 const props = defineProps<{
   stations: Station[];
+  routes: Route[];
+  lineColors: Record<string, string>;
+  tramLineIds: string[];
+  center: [number, number];
+  zoom: number;
   highlightedId: string | null;
   winnerId: string | null;
   animationTarget: { lat: number; lng: number } | null;
@@ -18,20 +23,12 @@ const emit = defineEmits<{
   ready: [];
 }>();
 
-const LINE_COLORS: Record<TbanaLine, string> = {
-  red: '#E4000F',
-  green: '#00873E',
-  blue: '#005DA0',
-  tvarbanan: '#E07B39',
-  'sparvag-city': '#8B5CF6',
-};
-
-function normalStyle(line: TbanaLine): L.CircleMarkerOptions {
-  return { radius: 6, fillColor: LINE_COLORS[line], color: '#fff', weight: 2, fillOpacity: 0.9, interactive: true };
+function normalStyle(line: string): L.CircleMarkerOptions {
+  return { radius: 6, fillColor: props.lineColors[line] ?? '#888', color: '#fff', weight: 2, fillOpacity: 0.9, interactive: true };
 }
 
-function winnerStyle(line: TbanaLine): L.CircleMarkerOptions {
-  return { radius: 14, fillColor: LINE_COLORS[line], color: '#FFD700', weight: 4, fillOpacity: 1, interactive: true };
+function winnerStyle(line: string): L.CircleMarkerOptions {
+  return { radius: 14, fillColor: props.lineColors[line] ?? '#888', color: '#FFD700', weight: 4, fillOpacity: 1, interactive: true };
 }
 
 const vehicleStyle: L.CircleMarkerOptions = {
@@ -43,8 +40,6 @@ const vehicleStyle: L.CircleMarkerOptions = {
   interactive: false,
 };
 
-const TRAM_LINES = new Set<TbanaLine>(['tvarbanan', 'sparvag-city']);
-
 const TILE_URL_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 const TILE_URL_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 
@@ -55,12 +50,14 @@ const markerMap = new Map<string, L.CircleMarker>();
 const vehicleMarkers = new Map<string, L.CircleMarker>();
 const tramPolylines: L.Polyline[] = [];
 
+const tramLineSet = computed(() => new Set(props.tramLineIds));
+
 onMounted(async() => {
   await nextTick();
   if (!mapEl.value) return;
   map = L.map(mapEl.value, {
-    center: [59.332, 18.065],
-    zoom: 11,
+    center: props.center,
+    zoom: props.zoom,
     zoomControl: true,
   });
 
@@ -71,19 +68,20 @@ onMounted(async() => {
   }).addTo(map);
 
   const stationById = new Map(props.stations.map(s => [s.id, s]));
-  routes.forEach(route => {
+  props.routes.forEach(route => {
     const coords = route.stationIds
       .map(id => stationById.get(id))
       .filter((s): s is Station => !!s)
       .map(s => [s.lat, s.lng] as [number, number]);
     if (coords.length >= 2) {
+      const color = props.lineColors[route.line] ?? '#888';
       const polyline = L.polyline(coords, {
-        color: LINE_COLORS[route.line],
+        color,
         weight: 4,
         opacity: 0.65,
         interactive: false,
       });
-      if (TRAM_LINES.has(route.line)) {
+      if (tramLineSet.value.has(route.line)) {
         tramPolylines.push(polyline);
         if (props.tramsIncluded) polyline.addTo(map);
       } else {
@@ -96,7 +94,7 @@ onMounted(async() => {
     const marker = L.circleMarker([station.lat, station.lng], normalStyle(station.line));
     marker.bindTooltip(station.name, { permanent: false, direction: 'top', offset: [0, -8] });
     markerMap.set(station.id, marker);
-    if (!TRAM_LINES.has(station.line) || props.tramsIncluded) {
+    if (!tramLineSet.value.has(station.line) || props.tramsIncluded) {
       marker.addTo(map);
     }
   });
@@ -110,7 +108,7 @@ watch(() => props.darkMode, (dark) => {
 
 watch(() => props.tramsIncluded, (included) => {
   if (!map) return;
-  props.stations.filter(s => TRAM_LINES.has(s.line)).forEach(s => {
+  props.stations.filter(s => tramLineSet.value.has(s.line)).forEach(s => {
     const marker = markerMap.get(s.id);
     if (!marker) return;
     if (included) marker.addTo(map);
@@ -142,7 +140,6 @@ watch(() => props.vehicles, (newVehicles) => {
     }
   });
 
-  // Remove markers for vehicles no longer in the feed
   vehicleMarkers.forEach((marker, id) => {
     if (!seen.has(id)) {
       marker.remove();
@@ -157,9 +154,6 @@ watch(() => props.highlightedId, (newId, oldId) => {
     const s = props.stations.find(st => st.id === oldId);
     if (el && s) {
       const ns = normalStyle(s.line);
-      // Direct SVG attribute writes — bypass Leaflet's _project()/_updateCircle()
-      // which recalculates cx/cy using the mid-animation pane position and causes
-      // the highlighted dot to appear offset from its actual station during flyTo.
       el.setAttribute('r', String(ns.radius));
       el.setAttribute('fill', ns.fillColor!);
       el.setAttribute('stroke', ns.color!);
@@ -197,7 +191,7 @@ watch(() => props.winnerId, (newId, oldId) => {
       map.flyTo([s.lat, s.lng], 14, { duration: 1.2 });
     }
   } else {
-    map.flyTo([59.332, 18.065], 11, { duration: 1 });
+    map.flyTo(props.center, props.zoom, { duration: 1 });
   }
 });
 </script>
