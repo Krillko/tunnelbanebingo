@@ -58,6 +58,14 @@ function skipOnboarding() {
   showOnboarding.value = false;
 }
 
+async function onboardingGoogleSignIn() {
+  await signInWithGoogle();
+  if (syncStatus.value === 'synced') {
+    markOnboarded();
+    showOnboarding.value = false;
+  }
+}
+
 const mapReady = ref(false);
 const activeTab = ref<'bingo' | 'settings'>('bingo');
 const winnerJustAdded = ref(false);
@@ -133,7 +141,7 @@ const showCloudDialog = ref(false);
 const cloudPrompted = ref(!!localStorage.getItem('tunnelbanebingo-cloud-prompted'));
 
 watch(() => visitedSet.value.size, (newSize, oldSize) => {
-  if (newSize === 1 && (oldSize ?? 0) === 0 && !cloudPrompted.value && !signedInEmail.value && cloudSyncAvailable.value) {
+  if (newSize === 1 && (oldSize ?? 0) === 0 && !cloudPrompted.value && !signedInEmail.value && cloudSyncAvailable.value && syncStatus.value === 'idle') {
     showCloudDialog.value = true;
     cloudPrompted.value = true;
     localStorage.setItem('tunnelbanebingo-cloud-prompted', '1');
@@ -193,6 +201,19 @@ const lastSyncedText = computed(() =>
           >
             Gör det senare (i Inställningar)
           </UButton>
+          <template v-if="cloudSyncAvailable && !signedInEmail">
+            <USeparator class="my-1" />
+            <UButton
+              block
+              variant="ghost"
+              color="neutral"
+              leading-icon="i-logos-google-icon"
+              :loading="syncStatus === 'signing-in' || syncStatus === 'syncing'"
+              @click="onboardingGoogleSignIn"
+            >
+              Logga in med Google
+            </UButton>
+          </template>
         </div>
       </template>
     </UModal>
@@ -218,6 +239,24 @@ const lastSyncedText = computed(() =>
         <p class="text-sm text-gray-500 mt-1">
           Slumpa en station på Stockholms tunnelbana / Spårvägar
         </p>
+        <template v-if="cloudSyncAvailable">
+          <div v-if="signedInEmail" class="flex items-center gap-1.5 mt-2">
+            <span class="size-1.5 rounded-full bg-green-500 shrink-0" />
+            <span class="text-xs text-gray-400 truncate">{{ signedInEmail }}</span>
+          </div>
+          <UButton
+            v-else
+            size="xs"
+            variant="ghost"
+            color="neutral"
+            leading-icon="i-logos-google-icon"
+            class="mt-2 -ml-1.5"
+            :loading="syncStatus === 'signing-in' || syncStatus === 'syncing'"
+            @click="signInWithGoogle"
+          >
+            Logga in med Google
+          </UButton>
+        </template>
       </div>
 
       <USeparator />
