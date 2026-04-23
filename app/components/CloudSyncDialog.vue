@@ -9,6 +9,7 @@ const emit = defineEmits<{
   'update:open': [value: boolean];
 }>();
 
+const { t } = useI18n();
 const { signInWithGoogle, syncStatus, syncError } = useCloudSync();
 
 const isSigningIn = computed(() => syncStatus.value === 'signing-in' || syncStatus.value === 'syncing');
@@ -30,15 +31,15 @@ async function handleGoogleSignIn() {
 <template>
   <UModal
     :open="props.open"
-    title="Stationen sparades!"
+    :title="t('cloudDialog.title')"
     @update:open="(v) => { if (!v) dismiss(); }"
   >
     <template #body>
-      <p class="text-sm text-gray-600">
-        Men bara lokalt i den här webbläsaren. Vill du synka till molnet så att dina stationer sparas mellan enheter?
+      <p class="text-sm text-gray-600 dark:text-gray-400">
+        {{ t('cloudDialog.description') }}
       </p>
-      <p class="text-xs text-gray-400 mt-2">
-        Dina data lagras i din egna Google Drive. Inga externa servrar.
+      <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">
+        {{ t('cloudDialog.note') }}
       </p>
       <p v-if="syncError" class="text-xs text-red-500 mt-2">
         {{ syncError }}
@@ -53,7 +54,7 @@ async function handleGoogleSignIn() {
           leading-icon="i-logos-google-icon"
           @click="handleGoogleSignIn"
         >
-          Logga in med Google
+          {{ t('cloudDialog.signIn') }}
         </UButton>
         <UButton
           block
@@ -62,7 +63,7 @@ async function handleGoogleSignIn() {
           :disabled="isSigningIn"
           @click="dismiss"
         >
-          Nej tack, behåll lokalt
+          {{ t('cloudDialog.dismiss') }}
         </UButton>
       </div>
     </template>

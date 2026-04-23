@@ -1,2 +1,15 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+
+.dark .leaflet-control-zoom a {
+  @apply bg-gray-800 text-gray-200 border-gray-600;
+}
+.dark .leaflet-control-zoom a:hover {
+  @apply bg-gray-700;
+}
+.dark .leaflet-tooltip {
+  @apply bg-gray-800 text-gray-200 border-gray-700;
+}
+.dark .leaflet-tooltip::before {
+  border-top-color: theme('colors.gray.700');
+}

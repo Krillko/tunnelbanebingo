@@ -6,6 +6,9 @@ import { useHomeStation } from '~/composables/useHomeStation';
 import { useOnboarding } from '~/composables/useOnboarding';
 import type { TbanaLine } from '~/types/station';
 
+const { t, locale, setLocale } = useI18n();
+const colorMode = useColorMode();
+
 const { visitedSet, toggle, markVisited } = useVisitedStations();
 const { homeStationId, setHome } = useHomeStation();
 const { hasOnboarded, markOnboarded } = useOnboarding();
@@ -43,7 +46,6 @@ const selectedHomeStation = computed<HomeSelectItem | null>({
   set: (item: HomeSelectItem | null) => setHome(item?.value ?? null),
 });
 
-// Onboarding dialog — local selection committed only on confirm, not on select
 const showOnboarding = ref(!hasOnboarded.value);
 const dialogStation = ref<HomeSelectItem | null>(null);
 
@@ -70,13 +72,13 @@ const mapReady = ref(false);
 const activeTab = ref<'bingo' | 'settings'>('bingo');
 const winnerJustAdded = ref(false);
 
-const LINE_LABELS: Record<TbanaLine, string> = {
-  red: 'Röda linjen',
-  green: 'Gröna linjen',
-  blue: 'Blå linjen',
-  tvarbanan: 'Tvärbanan',
-  'sparvag-city': 'Spårväg City',
-};
+const LINE_LABELS = computed<Record<TbanaLine, string>>(() => ({
+  red: t('lines.red'),
+  green: t('lines.green'),
+  blue: t('lines.blue'),
+  tvarbanan: t('lines.tvarbanan'),
+  'sparvag-city': t('lines.sparvagCity'),
+}));
 
 const LINE_COLORS: Record<TbanaLine, string> = {
   red: '#E4000F',
@@ -104,6 +106,10 @@ const visibleLines = computed<TbanaLine[]>(() =>
 
 const visibleStations = computed(() =>
   stations.filter(s => tramsIncluded.value || !TRAM_LINES.has(s.line))
+);
+
+const visitedCount = computed(() =>
+  visibleStations.value.filter(s => visitedSet.value.has(s.id)).length
 );
 
 // Worker-based confetti instance — runs particle physics off the main thread
@@ -152,34 +158,57 @@ watch([visitedSet, homeStationId, tramsIncluded], () => {
   debouncedSync();
 });
 
-const lastSyncedText = computed(() =>
-  lastSyncedAt.value?.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' }) ?? null
-);
+const lastSyncedText = computed(() => {
+  if (!lastSyncedAt.value) return null;
+  const loc = (locale.value === 'en') ? 'en-GB' : 'sv-SE';
+  return lastSyncedAt.value.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' });
+});
+
+const colorModeIcon = computed(() => {
+  if (colorMode.preference === 'dark') return 'i-heroicons-moon';
+  if (colorMode.preference === 'light') return 'i-heroicons-sun';
+  return colorMode.value === 'dark' ? 'i-heroicons-moon' : 'i-heroicons-sun';
+});
+
+function cycleColorMode() {
+  if (colorMode.preference === 'system') {
+    colorMode.preference = 'light';
+  } else if (colorMode.preference === 'light') {
+    colorMode.preference = 'dark';
+  } else {
+    colorMode.preference = 'system';
+  }
+}
+
+function toggleLocale() {
+  setLocale(locale.value === 'sv' ? 'en' : 'sv');
+}
+
+const isDark = computed(() => colorMode.value === 'dark');
 </script>
 
 <template>
-  <div class="flex flex-col md:flex-row h-screen bg-gray-50">
+  <div class="flex flex-col md:flex-row h-screen bg-gray-50 dark:bg-gray-950">
     <UModal
       v-model:open="showOnboarding"
-      title="Välj din hemstation"
+      :title="t('onboarding.title')"
       :dismissible="false"
       :close="false"
     >
       <template #body>
-        <p class="text-sm text-gray-500">
-          Stationer nära hemmet lottas oftare — långt bort är fortfarande möjligt, bara ovanligare.
-          Du kan ändra detta när som helst i Inställningar.
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          {{ t('onboarding.description') }}
         </p>
         <USelectMenu
           v-model="dialogStation"
           :items="homeStationSelectItems"
           by="value"
-          placeholder="Sök station…"
+          :placeholder="t('onboarding.stationPlaceholder')"
           class="mt-3 w-full"
         />
         <UCheckbox
           :model-value="tramsIncluded"
-          label="Inkludera spårvägar (Tvärbanan & Spårväg City)"
+          :label="t('onboarding.includeRailways')"
           class="mt-4"
           @update:model-value="setTramsIncluded"
         />
@@ -191,7 +220,7 @@ const lastSyncedText = computed(() =>
             :disabled="!dialogStation"
             @click="confirmOnboarding"
           >
-            Välj hemstation
+            {{ t('onboarding.confirm') }}
           </UButton>
           <UButton
             block
@@ -199,7 +228,7 @@ const lastSyncedText = computed(() =>
             color="neutral"
             @click="skipOnboarding"
           >
-            Gör det senare (i Inställningar)
+            {{ t('onboarding.skip') }}
           </UButton>
           <template v-if="cloudSyncAvailable && !signedInEmail">
             <USeparator class="my-1" />
@@ -211,7 +240,7 @@ const lastSyncedText = computed(() =>
               :loading="syncStatus === 'signing-in' || syncStatus === 'syncing'"
               @click="onboardingGoogleSignIn"
             >
-              Logga in med Google
+              {{ t('app.signInGoogle') }}
             </UButton>
           </template>
         </div>
@@ -227,54 +256,75 @@ const lastSyncedText = computed(() =>
         :animation-target="animationTarget"
         :vehicles="vehicles"
         :trams-included="tramsIncluded"
+        :dark-mode="isDark"
         @ready="mapReady = true"
       />
     </div>
 
-    <div class="w-full md:w-72 flex-shrink-0 flex flex-col gap-4 p-6 overflow-y-auto border-t md:border-t-0 md:border-l border-gray-200 bg-white">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">
-          Tunnelbana<br>Bingo
-        </h1>
-        <p class="text-sm text-gray-500 mt-1">
-          Slumpa en station på Stockholms tunnelbana / Spårvägar
-        </p>
-        <template v-if="cloudSyncAvailable">
-          <div v-if="signedInEmail" class="flex items-center gap-1.5 mt-2">
-            <span class="size-1.5 rounded-full bg-green-500 shrink-0" />
-            <span class="text-xs text-gray-400 truncate">{{ signedInEmail }}</span>
-          </div>
+    <div class="w-full md:w-72 flex-shrink-0 flex flex-col gap-4 p-6 overflow-y-auto border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+      <div class="flex items-start justify-between gap-2">
+        <div class="min-w-0">
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+            Tunnelbana<br>Bingo
+          </h1>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {{ t('app.subtitle') }}
+          </p>
+          <template v-if="cloudSyncAvailable">
+            <div v-if="signedInEmail" class="flex items-center gap-1.5 mt-2">
+              <span class="size-1.5 rounded-full bg-green-500 shrink-0" />
+              <span class="text-xs text-gray-400 dark:text-gray-500 truncate">{{ signedInEmail }}</span>
+            </div>
+            <UButton
+              v-else
+              size="xs"
+              variant="ghost"
+              color="neutral"
+              leading-icon="i-logos-google-icon"
+              class="mt-2 -ml-1.5"
+              :loading="syncStatus === 'signing-in' || syncStatus === 'syncing'"
+              @click="signInWithGoogle"
+            >
+              {{ t('app.signInGoogle') }}
+            </UButton>
+          </template>
+        </div>
+        <div class="flex items-center gap-0.5 shrink-0 pt-1">
           <UButton
-            v-else
             size="xs"
             variant="ghost"
             color="neutral"
-            leading-icon="i-logos-google-icon"
-            class="mt-2 -ml-1.5"
-            :loading="syncStatus === 'signing-in' || syncStatus === 'syncing'"
-            @click="signInWithGoogle"
+            class="font-medium"
+            @click="toggleLocale"
           >
-            Logga in med Google
+            {{ locale === 'sv' ? '🇸🇪' : '🇬🇧' }}
           </UButton>
-        </template>
+          <UButton
+            size="xs"
+            variant="ghost"
+            color="neutral"
+            :icon="colorModeIcon"
+            @click="cycleColorMode"
+          />
+        </div>
       </div>
 
       <USeparator />
 
-      <div class="flex gap-1 p-1 bg-gray-100 rounded-lg">
+      <div class="flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
         <button
           class="flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors"
-          :class="activeTab === 'bingo' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+          :class="activeTab === 'bingo' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
           @click="activeTab = 'bingo'"
         >
-          Bingo
+          {{ t('tabs.bingo') }}
         </button>
         <button
           class="flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors"
-          :class="activeTab === 'settings' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+          :class="activeTab === 'settings' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
           @click="activeTab = 'settings'"
         >
-          Inställningar
+          {{ t('tabs.settings') }}
         </button>
       </div>
 
@@ -299,13 +349,13 @@ const lastSyncedText = computed(() =>
               class="text-xl font-bold py-4"
               @click="startBingo"
             >
-              🎰 Bingo!
+              {{ t('bingo.button') }}
             </UButton>
-            <p v-if="!mapReady" class="text-xs text-gray-400 text-center">
-              Laddar karta...
+            <p v-if="!mapReady" class="text-xs text-gray-400 dark:text-gray-500 text-center">
+              {{ t('bingo.loadingMap') }}
             </p>
-            <p v-else-if="eligibleStations.length === 0" class="text-xs text-gray-400 text-center">
-              Alla stationer är besökta! Avmarkera i Inställningar.
+            <p v-else-if="eligibleStations.length === 0" class="text-xs text-gray-400 dark:text-gray-500 text-center">
+              {{ t('bingo.allVisited') }}
             </p>
           </div>
 
@@ -315,8 +365,8 @@ const lastSyncedText = computed(() =>
             class="flex flex-col items-center gap-3 py-4"
           >
             <div class="text-4xl animate-bounce">🎲</div>
-            <p class="text-lg font-semibold text-gray-700 animate-pulse">
-              Drar lott...
+            <p class="text-lg font-semibold text-gray-700 dark:text-gray-300 animate-pulse">
+              {{ t('bingo.spinning') }}
             </p>
           </div>
 
@@ -327,7 +377,7 @@ const lastSyncedText = computed(() =>
           >
             <div class="rounded-xl border-2 p-5 text-center" :style="{ borderColor: LINE_COLORS[winner.line] }">
               <div class="text-5xl mb-3">🏆</div>
-              <h2 class="text-2xl font-bold text-gray-900 mb-2">
+              <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                 {{ winner.name }}
               </h2>
               <span
@@ -337,13 +387,13 @@ const lastSyncedText = computed(() =>
                 {{ LINE_LABELS[winner.line] }}
               </span>
 
-              <div v-if="venuesLoading || venues.length" class="mt-3 pt-3 border-t border-gray-100">
-                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                  Nära stationen
+              <div v-if="venuesLoading || venues.length" class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">
+                  {{ t('bingo.nearStation') }}
                 </p>
-                <div v-if="venuesLoading" class="flex items-center gap-1.5 text-xs text-gray-400">
+                <div v-if="venuesLoading" class="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
                   <UIcon name="i-heroicons-arrow-path" class="animate-spin size-3 shrink-0" />
-                  Letar efter ställen…
+                  {{ t('bingo.searchingPlaces') }}
                 </div>
                 <div v-else class="flex flex-col gap-1.5">
                   <a
@@ -352,13 +402,13 @@ const lastSyncedText = computed(() =>
                     :href="venue.url"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="flex items-center justify-between gap-2 text-sm rounded-md px-2 py-1 -mx-2 hover:bg-gray-50 transition-colors"
+                    class="flex items-center justify-between gap-2 text-sm rounded-md px-2 py-1 -mx-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
-                    <span class="truncate text-gray-800">{{ venue.name }}</span>
-                    <span class="shrink-0 text-xs text-gray-400">{{ venue.distanceM }} m</span>
+                    <span class="truncate text-gray-800 dark:text-gray-200">{{ venue.name }}</span>
+                    <span class="shrink-0 text-xs text-gray-400 dark:text-gray-500">{{ venue.distanceM }} m</span>
                   </a>
-                  <p v-if="venues.length" class="text-xs text-gray-400 mt-1">
-                    Resultaten är varken sponsrade eller granskade.
+                  <p v-if="venues.length" class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    {{ t('bingo.disclaimer') }}
                   </p>
                 </div>
               </div>
@@ -371,17 +421,18 @@ const lastSyncedText = computed(() =>
               size="sm"
               @click="addWinnerToVisited"
             >
-              ✓ Markera som besökt
+              {{ t('bingo.markVisited') }}
             </UButton>
-            <p v-else class="text-xs text-center text-gray-400">
-              ✓ Tillagd i besökta stationer
+            <p v-else class="text-xs text-center text-gray-400 dark:text-gray-500">
+              {{ t('bingo.markedVisited') }}
             </p>
 
             <UButton
               variant="outline"
               block
-              @click="handleReset">
-              Spela igen
+              @click="handleReset"
+            >
+              {{ t('bingo.playAgain') }}
             </UButton>
           </div>
         </Transition>
@@ -390,18 +441,18 @@ const lastSyncedText = computed(() =>
       <!-- Settings tab -->
       <div v-else class="flex flex-col gap-5">
         <div>
-          <p class="text-sm font-medium text-gray-900">
-            Hemstation
+          <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+            {{ t('settings.homeStation') }}
           </p>
-          <p class="text-xs text-gray-500 mt-0.5">
-            Stationer nära hemmet lottas mer sannolikt.
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            {{ t('settings.homeStationHint') }}
           </p>
           <USelectMenu
             v-model="selectedHomeStation"
             :items="homeStationSelectItems"
             by="value"
             :clear="true"
-            placeholder="Välj hemstation…"
+            :placeholder="t('settings.homeStationPlaceholder')"
             class="mt-2 w-full"
           />
         </div>
@@ -411,14 +462,14 @@ const lastSyncedText = computed(() =>
         <!-- Cloud sync section — only shown when GOOGLE_CLIENT_ID is configured -->
         <template v-if="cloudSyncAvailable">
           <div>
-            <p class="text-sm font-medium text-gray-900">
-              Molnsynk
+            <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+              {{ t('settings.cloudSync') }}
             </p>
 
             <!-- Not signed in -->
             <template v-if="!signedInEmail">
-              <p class="text-xs text-gray-500 mt-0.5">
-                Spara dina stationer i Google Drive och synka mellan enheter.
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                {{ t('settings.cloudSyncHint') }}
               </p>
               <UButton
                 size="sm"
@@ -428,7 +479,7 @@ const lastSyncedText = computed(() =>
                 :loading="syncStatus === 'signing-in' || syncStatus === 'syncing'"
                 @click="signInWithGoogle"
               >
-                Logga in med Google
+                {{ t('settings.signInGoogle') }}
               </UButton>
               <p v-if="syncError" class="text-xs text-red-500 mt-1.5">
                 {{ syncError }}
@@ -437,19 +488,19 @@ const lastSyncedText = computed(() =>
 
             <!-- Syncing -->
             <template v-else-if="syncStatus === 'syncing'">
-              <div class="flex items-center gap-1.5 mt-1.5 text-xs text-gray-500">
+              <div class="flex items-center gap-1.5 mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                 <UIcon name="i-heroicons-arrow-path" class="animate-spin size-3 shrink-0" />
-                Synkar…
+                {{ t('settings.syncing') }}
               </div>
             </template>
 
             <!-- Signed in -->
             <template v-else>
-              <p class="text-xs text-gray-500 mt-0.5 truncate">
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
                 {{ signedInEmail }}
               </p>
-              <p v-if="lastSyncedText" class="text-xs text-gray-400 mt-0.5">
-                Senast synkat: {{ lastSyncedText }}
+              <p v-if="lastSyncedText" class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                {{ t('settings.lastSynced', { time: lastSyncedText }) }}
               </p>
               <p v-if="syncError" class="text-xs text-red-500 mt-0.5">
                 {{ syncError }}
@@ -458,15 +509,17 @@ const lastSyncedText = computed(() =>
                 <UButton
                   size="xs"
                   variant="outline"
-                  @click="syncNow">
-                  Synka nu
+                  @click="syncNow"
+                >
+                  {{ t('settings.syncNow') }}
                 </UButton>
                 <UButton
                   size="xs"
                   variant="ghost"
                   color="neutral"
-                  @click="signOut">
-                  Logga ut
+                  @click="signOut"
+                >
+                  {{ t('settings.signOut') }}
                 </UButton>
               </div>
             </template>
@@ -476,15 +529,15 @@ const lastSyncedText = computed(() =>
         </template>
 
         <div>
-          <p class="text-sm font-medium text-gray-900">
-            Spårvägar
+          <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+            {{ t('settings.railways') }}
           </p>
-          <p class="text-xs text-gray-500 mt-0.5">
-            Inkludera Tvärbanan och Spårväg City i lottningen.
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            {{ t('settings.railwaysHint') }}
           </p>
           <UCheckbox
             :model-value="tramsIncluded"
-            label="Inkludera spårvägar"
+            :label="t('settings.includeRailways')"
             class="mt-2"
             @update:model-value="setTramsIncluded"
           />
@@ -493,20 +546,20 @@ const lastSyncedText = computed(() =>
         <USeparator />
 
         <div>
-          <p class="text-sm font-medium text-gray-900">
-            Besökta stationer
+          <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+            {{ t('settings.visitedStations') }}
           </p>
-          <p class="text-xs text-gray-500 mt-0.5">
-            Besökta stationer utesluts ur lottningen.
-            {{ visibleStations.filter(s => visitedSet.has(s.id)).length }} av {{ visibleStations.length }} besökta.
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            {{ t('settings.visitedHint') }}
+            {{ t('settings.visitedCount', { visited: visitedCount, total: visibleStations.length }) }}
           </p>
         </div>
 
         <div v-for="line in visibleLines" :key="line">
           <div class="flex items-center gap-1.5 mb-2">
             <div class="w-3 h-3 rounded-full shrink-0" :style="{ backgroundColor: LINE_COLORS[line] }" />
-            <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">{{ LINE_LABELS[line] }}</span>
-            <span class="text-xs text-gray-400 ml-auto">
+            <span class="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">{{ LINE_LABELS[line] }}</span>
+            <span class="text-xs text-gray-400 dark:text-gray-500 ml-auto">
               {{ stationsByLine[line].filter(s => visitedSet.has(s.id)).length }}/{{ stationsByLine[line].length }}
             </span>
           </div>
@@ -531,12 +584,12 @@ const lastSyncedText = computed(() =>
           class="flex items-center gap-1.5"
         >
           <div class="w-3 h-3 rounded-full shrink-0" :style="{ backgroundColor: color }" />
-          <span class="text-xs text-gray-500">{{ LINE_LABELS[line] }}</span>
+          <span class="text-xs text-gray-500 dark:text-gray-400">{{ LINE_LABELS[line] }}</span>
         </div>
       </div>
       <div class="text-center">
-        <NuxtLink to="/about" class="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-          Om appen &amp; datakällor
+        <NuxtLink to="/about" class="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+          {{ t('footer.about') }}
         </NuxtLink>
       </div>
     </div>

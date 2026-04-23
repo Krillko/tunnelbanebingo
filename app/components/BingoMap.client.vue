@@ -11,6 +11,7 @@ const props = defineProps<{
   animationTarget: { lat: number; lng: number } | null;
   vehicles: Vehicle[];
   tramsIncluded: boolean;
+  darkMode: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -44,8 +45,12 @@ const vehicleStyle: L.CircleMarkerOptions = {
 
 const TRAM_LINES = new Set<TbanaLine>(['tvarbanan', 'sparvag-city']);
 
+const TILE_URL_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+const TILE_URL_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+
 const mapEl = useTemplateRef<HTMLDivElement>('mapEl');
 let map: L.Map;
+let tileLayer: L.TileLayer | null = null;
 const markerMap = new Map<string, L.CircleMarker>();
 const vehicleMarkers = new Map<string, L.CircleMarker>();
 const tramPolylines: L.Polyline[] = [];
@@ -59,7 +64,7 @@ onMounted(async() => {
     zoomControl: true,
   });
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  tileLayer = L.tileLayer(props.darkMode ? TILE_URL_DARK : TILE_URL_LIGHT, {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/">CARTO</a>',
     subdomains: 'abcd',
     maxZoom: 19,
@@ -97,6 +102,10 @@ onMounted(async() => {
   });
 
   emit('ready');
+});
+
+watch(() => props.darkMode, (dark) => {
+  tileLayer?.setUrl(dark ? TILE_URL_DARK : TILE_URL_LIGHT);
 });
 
 watch(() => props.tramsIncluded, (included) => {
