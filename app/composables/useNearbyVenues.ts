@@ -5,6 +5,7 @@ interface Venue {
   lng: number;
   amenity: string;
   distanceM: number;
+  url: string;
 }
 
 interface OverpassElement {
@@ -37,14 +38,14 @@ export function useNearbyVenues() {
   async function fetchVenues(stationLat: number, stationLng: number): Promise<void> {
     loading.value = true;
     venues.value = [];
-    const query = `[out:json][timeout:10];
+    const query = `[out:json][timeout:20];
 (
-  node["amenity"~"^(bar|pub|cafe)$"]["name"](around:500,${stationLat},${stationLng});
-  way["amenity"~"^(bar|pub|cafe)$"]["name"](around:500,${stationLat},${stationLng});
+  node["amenity"~"^(bar|pub|cafe|restaurant)$"]["name"](around:500,${stationLat},${stationLng});
+  way["amenity"~"^(bar|pub|cafe|restaurant)$"]["name"](around:500,${stationLat},${stationLng});
 );
 out center body;`;
     try {
-      const data = await $fetch<OverpassResponse>('https://overpass-api.de/api/interpreter', {
+      const data = await $fetch<OverpassResponse>('https://overpass.kumi.systems/api/interpreter', {
         method: 'POST',
         body: `data=${encodeURIComponent(query)}`,
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -56,7 +57,8 @@ out center body;`;
           const lng = el.type === 'node' ? el.lon : el.center?.lon;
           if (lat == null || lng == null) return null;
           const distanceM = Math.round(haversineM(stationLat, stationLng, lat, lng) / 5) * 5;
-          return { id: el.id, name: el.tags!.name!, lat, lng, amenity: el.tags!.amenity ?? '', distanceM };
+          const url = el.tags!.website ?? el.tags!['contact:website'] ?? `https://www.openstreetmap.org/${el.type}/${el.id}`;
+          return { id: el.id, name: el.tags!.name!, lat, lng, amenity: el.tags!.amenity ?? '', distanceM, url };
         })
         .filter((v): v is Venue => v !== null)
         .sort((a, b) => a.distanceM - b.distanceM)

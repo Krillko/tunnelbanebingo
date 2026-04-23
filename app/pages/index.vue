@@ -253,18 +253,25 @@ function addWinnerToVisited() {
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
                   Nära stationen
                 </p>
-                <div v-if="venuesLoading" class="text-xs text-gray-400">
+                <div v-if="venuesLoading" class="flex items-center gap-1.5 text-xs text-gray-400">
+                  <UIcon name="i-heroicons-arrow-path" class="animate-spin size-3 shrink-0" />
                   Letar efter ställen…
                 </div>
                 <div v-else class="flex flex-col gap-1.5">
-                  <div
+                  <a
                     v-for="venue in venues"
                     :key="venue.id"
-                    class="flex items-center justify-between gap-2 text-sm"
+                    :href="venue.url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="flex items-center justify-between gap-2 text-sm rounded-md px-2 py-1 -mx-2 hover:bg-gray-50 transition-colors"
                   >
                     <span class="truncate text-gray-800">{{ venue.name }}</span>
                     <span class="shrink-0 text-xs text-gray-400">{{ venue.distanceM }} m</span>
-                  </div>
+                  </a>
+                  <p v-if="venues.length" class="text-xs text-gray-400 mt-1">
+                    Resultaten är varken sponsrade eller granskade.
+                  </p>
                 </div>
               </div>
             </div>
@@ -354,6 +361,11 @@ function addWinnerToVisited() {
           <div class="w-3 h-3 rounded-full shrink-0" :style="{ backgroundColor: color }" />
           <span class="text-xs text-gray-500">{{ LINE_LABELS[line] }}</span>
         </div>
+      </div>
+      <div class="text-center">
+        <NuxtLink to="/about" class="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+          Om appen &amp; datakällor
+        </NuxtLink>
       </div>
     </div>
   </div>
