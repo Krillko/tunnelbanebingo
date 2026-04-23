@@ -3,10 +3,12 @@ import { stations } from '~/data/stations';
 import { useBingoAnimation } from '~/composables/useBingoAnimation';
 import { useVisitedStations } from '~/composables/useVisitedStations';
 import { useHomeStation } from '~/composables/useHomeStation';
+import { useOnboarding } from '~/composables/useOnboarding';
 import type { TbanaLine } from '~/types/station';
 
 const { visitedSet, toggle, markVisited } = useVisitedStations();
 const { homeStationId, setHome } = useHomeStation();
+const { hasOnboarded, markOnboarded } = useOnboarding();
 const { vehicles } = useVehiclePositions();
 
 const eligibleStations = computed(() =>
@@ -26,6 +28,21 @@ const selectedHomeStation = computed<HomeSelectItem | null>({
   get: () => homeStationSelectItems.find(i => i.value === homeStationId.value) ?? null,
   set: (item: HomeSelectItem | null) => setHome(item?.value ?? null),
 });
+
+// Onboarding dialog — local selection committed only on confirm, not on select
+const showOnboarding = ref(!hasOnboarded.value);
+const dialogStation = ref<HomeSelectItem | null>(null);
+
+function confirmOnboarding() {
+  if (dialogStation.value) setHome(dialogStation.value.value);
+  markOnboarded();
+  showOnboarding.value = false;
+}
+
+function skipOnboarding() {
+  markOnboarded();
+  showOnboarding.value = false;
+}
 
 const mapReady = ref(false);
 const activeTab = ref<'bingo' | 'settings'>('bingo');
@@ -87,6 +104,45 @@ function addWinnerToVisited() {
 
 <template>
   <div class="flex flex-col md:flex-row h-screen bg-gray-50">
+    <UModal
+      v-model:open="showOnboarding"
+      title="Välj din hemstation"
+      :dismissible="false"
+      :close="false"
+    >
+      <template #body>
+        <p class="text-sm text-gray-500">
+          Stationer nära hemmet lottas oftare — långt bort är fortfarande möjligt, bara ovanligare.
+          Du kan ändra detta när som helst i Inställningar.
+        </p>
+        <USelectMenu
+          v-model="dialogStation"
+          :items="homeStationSelectItems"
+          by="value"
+          placeholder="Sök station…"
+          class="mt-3 w-full"
+        />
+      </template>
+      <template #footer>
+        <div class="flex flex-col gap-2 w-full">
+          <UButton
+            block
+            :disabled="!dialogStation"
+            @click="confirmOnboarding"
+          >
+            Välj hemstation
+          </UButton>
+          <UButton
+            block
+            variant="ghost"
+            color="neutral"
+            @click="skipOnboarding"
+          >
+            Gör det senare (i Inställningar)
+          </UButton>
+        </div>
+      </template>
+    </UModal>
     <div class="flex-1 min-h-0 min-h-[50vh] md:min-h-0">
       <BingoMap
         :stations="stations"
@@ -104,7 +160,7 @@ function addWinnerToVisited() {
           Tunnelbana<br>Bingo
         </h1>
         <p class="text-sm text-gray-500 mt-1">
-          Slumpa en station på Stockholms tunnelbana
+          Slumpa en station på Stockholms tunnelbana / Spårvägar
         </p>
       </div>
 
