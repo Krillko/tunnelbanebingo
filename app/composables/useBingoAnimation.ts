@@ -2,10 +2,13 @@ import { toValue } from 'vue';
 import type { MaybeRefOrGetter } from 'vue';
 import type { Station } from '~/types/station';
 import { useTickSound } from '~/composables/useTickSound';
+import { travelTimesFrom } from '~/utils/travelTime';
 
 const TOTAL_DURATION_MS = 4000;
 const MIN_INTERVAL_MS = 60;
 const MAX_INTERVAL_MS = 600;
+// Exponential decay time constant in minutes — controls how steeply weight falls off with distance
+const DECAY_TAU = 20;
 
 function intervalAt(elapsed: number): number {
   const t = Math.min(elapsed / TOTAL_DURATION_MS, 1);
@@ -18,7 +21,29 @@ function sqDist(a: Station, b: Station): number {
   return dlat * dlat + dlng * dlng;
 }
 
-export function useBingoAnimation(stationsSource: MaybeRefOrGetter<Station[]>) {
+function pickTarget(eligible: Station[], times: Map<string, number> | null): Station {
+  if (!times) {
+    return eligible[Math.floor(Math.random() * eligible.length)]!;
+  }
+
+  const weights = eligible.map(s => {
+    const t = times.get(s.id);
+    return Math.exp(-(t ?? 120) / DECAY_TAU);
+  });
+
+  const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+  let r = Math.random() * totalWeight;
+  for (let i = 0; i < eligible.length; i++) {
+    r -= weights[i]!;
+    if (r <= 0) return eligible[i]!;
+  }
+  return eligible.at(-1)!;
+}
+
+export function useBingoAnimation(
+  stationsSource: MaybeRefOrGetter<Station[]>,
+  homeStationIdSource: MaybeRefOrGetter<string | null> = () => null
+) {
   const animationState = ref<'idle' | 'spinning' | 'complete'>('idle');
   const currentHighlight = ref<string | null>(null);
   const winner = ref<Station | null>(null);
@@ -26,6 +51,13 @@ export function useBingoAnimation(stationsSource: MaybeRefOrGetter<Station[]>) {
   const { unlock, playTick } = useTickSound();
 
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  const travelTimes = computed<Map<string, number> | null>(() => {
+    const homeId = toValue(homeStationIdSource);
+    if (!homeId) return null;
+    const result = travelTimesFrom(homeId);
+    return result.size > 0 ? result : null;
+  });
 
   function startBingo() {
     if (animationState.value !== 'idle') return;
@@ -37,7 +69,7 @@ export function useBingoAnimation(stationsSource: MaybeRefOrGetter<Station[]>) {
     const eligible = toValue(stationsSource);
     if (!eligible.length) return;
 
-    const target = eligible[Math.floor(Math.random() * eligible.length)]!;
+    const target = pickTarget(eligible, travelTimes.value);
 
     // Pre-sort by proximity so we can narrow the pool cheaply on each tick
     const byDistance = [...eligible].sort((a, b) => sqDist(a, target) - sqDist(b, target));

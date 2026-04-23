@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Edit(*)",
+      "Write(*)",
+      "Bash(nvm use)",
+      "Bash(npx tsc --noEmit *)",
+      "Bash(npx eslint --fix *)"
+    ]
+  }
+}

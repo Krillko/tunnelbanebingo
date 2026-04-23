@@ -2,14 +2,30 @@
 import { stations } from '~/data/stations';
 import { useBingoAnimation } from '~/composables/useBingoAnimation';
 import { useVisitedStations } from '~/composables/useVisitedStations';
+import { useHomeStation } from '~/composables/useHomeStation';
 import type { TbanaLine } from '~/types/station';
 
 const { visitedSet, toggle, markVisited } = useVisitedStations();
+const { homeStationId, setHome } = useHomeStation();
 const { vehicles } = useVehiclePositions();
 
-const eligibleStations = computed(() => stations.filter(s => !visitedSet.value.has(s.id)));
+const eligibleStations = computed(() =>
+  stations.filter(s => !visitedSet.value.has(s.id) && s.id !== homeStationId.value)
+);
 
-const { animationState, currentHighlight, winner, animationTarget, startBingo, reset } = useBingoAnimation(eligibleStations);
+const { animationState, currentHighlight, winner, animationTarget, startBingo, reset } =
+  useBingoAnimation(eligibleStations, homeStationId);
+
+type HomeSelectItem = { label: string; value: string };
+const homeStationSelectItems = stations
+  .slice()
+  .sort((a, b) => a.name.localeCompare(b.name, 'sv'))
+  .map<HomeSelectItem>(s => ({ label: s.name, value: s.id }));
+
+const selectedHomeStation = computed<HomeSelectItem | null>({
+  get: () => homeStationSelectItems.find(i => i.value === homeStationId.value) ?? null,
+  set: (item: HomeSelectItem | null) => setHome(item?.value ?? null),
+});
 
 const mapReady = ref(false);
 const activeTab = ref<'bingo' | 'settings'>('bingo');
@@ -196,6 +212,25 @@ function addWinnerToVisited() {
 
       <!-- Settings tab -->
       <div v-else class="flex flex-col gap-5">
+        <div>
+          <p class="text-sm font-medium text-gray-900">
+            Hemstation
+          </p>
+          <p class="text-xs text-gray-500 mt-0.5">
+            Stationer nära hemmet lottas mer sannolikt.
+          </p>
+          <USelectMenu
+            v-model="selectedHomeStation"
+            :items="homeStationSelectItems"
+            by="value"
+            :clear="true"
+            placeholder="Välj hemstation…"
+            class="mt-2 w-full"
+          />
+        </div>
+
+        <USeparator />
+
         <div>
           <p class="text-sm font-medium text-gray-900">
             Besökta stationer
