@@ -28,10 +28,6 @@ function normalStyle(line: TbanaLine): L.CircleMarkerOptions {
   return { radius: 6, fillColor: LINE_COLORS[line], color: '#fff', weight: 2, fillOpacity: 0.9, interactive: true };
 }
 
-function highlightStyle(): L.CircleMarkerOptions {
-  return { radius: 11, fillColor: '#FFD700', color: '#fff', weight: 3, fillOpacity: 1, interactive: true };
-}
-
 function winnerStyle(line: TbanaLine): L.CircleMarkerOptions {
   return { radius: 14, fillColor: LINE_COLORS[line], color: '#FFD700', weight: 4, fillOpacity: 1, interactive: true };
 }
@@ -122,11 +118,29 @@ watch(() => props.vehicles, (newVehicles) => {
 
 watch(() => props.highlightedId, (newId, oldId) => {
   if (oldId && oldId !== props.winnerId) {
+    const el = markerMap.get(oldId)?.getElement();
     const s = props.stations.find(st => st.id === oldId);
-    if (s) markerMap.get(oldId)?.setStyle(normalStyle(s.line));
+    if (el && s) {
+      const ns = normalStyle(s.line);
+      // Direct SVG attribute writes — bypass Leaflet's _project()/_updateCircle()
+      // which recalculates cx/cy using the mid-animation pane position and causes
+      // the highlighted dot to appear offset from its actual station during flyTo.
+      el.setAttribute('r', String(ns.radius));
+      el.setAttribute('fill', ns.fillColor!);
+      el.setAttribute('stroke', ns.color!);
+      el.setAttribute('stroke-width', String(ns.weight));
+      el.setAttribute('fill-opacity', String(ns.fillOpacity));
+    }
   }
   if (newId) {
-    markerMap.get(newId)?.setStyle(highlightStyle());
+    const el = markerMap.get(newId)?.getElement();
+    if (el) {
+      el.setAttribute('r', '11');
+      el.setAttribute('fill', '#FFD700');
+      el.setAttribute('stroke', '#fff');
+      el.setAttribute('stroke-width', '3');
+      el.setAttribute('fill-opacity', '1');
+    }
   }
 });
 
