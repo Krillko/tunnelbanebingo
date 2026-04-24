@@ -42,6 +42,8 @@ const eligibleStations = computed(() =>
 const { animationState, currentHighlight, winner, animationTarget, startBingo, reset } =
   useBingoAnimation(eligibleStations, homeStationId, travelTimesFromFn.value);
 
+const { trackEvent } = useGoatCounter();
+
 const { venues, loading: venuesLoading, fetchVenues, clear: clearVenues } = useNearbyVenues();
 
 watch(winner, (w) => {
@@ -133,6 +135,11 @@ watch(winner, (w) => {
 
 function handleReset() {
   reset();
+}
+
+function handleStartBingo() {
+  trackEvent('randomize', 'Randomize pressed');
+  startBingo();
 }
 
 function addWinnerToVisited() {
@@ -407,7 +414,7 @@ const citySubtitle = computed(() => t(cityConfig.value.subtitleKey));
               block
               :disabled="!mapReady || eligibleStations.length === 0"
               class="text-xl font-bold py-4"
-              @click="startBingo"
+              @click="handleStartBingo"
             >
               {{ t('bingo.button') }}
             </UButton>
