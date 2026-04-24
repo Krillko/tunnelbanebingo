@@ -33,6 +33,7 @@ jobs:
       - run: npm run generate
         env:
           NUXT_APP_BASE_URL: /tunnelbanebingo/
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
 
       - uses: actions/configure-pages@v5
 
