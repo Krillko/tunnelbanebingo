@@ -201,21 +201,26 @@ const citySubtitle = computed(() => t(cityConfig.value.subtitleKey));
   <div class="flex flex-col md:flex-row h-screen bg-gray-50 dark:bg-gray-950">
     <UModal
       v-model:open="showOnboarding"
-      :title="t('onboarding.title')"
       :dismissible="false"
       :close="false"
     >
-      <template #body>
-        <div class="flex justify-end -mt-1 mb-3">
+      <template #header>
+        <div class="flex items-center justify-between w-full">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            {{ t('onboarding.title') }}
+          </h2>
           <UButton
-            size="xs"
+            size="md"
             variant="ghost"
             color="neutral"
+            class="text-xl leading-none tracking-tight"
             @click="toggleLocale"
           >
-            {{ locale === 'sv' ? '🇸🇪' : '🇬🇧' }}
+            🇸🇪 ⇄ 🇬🇧
           </UButton>
         </div>
+      </template>
+      <template #body>
         <p class="text-sm text-gray-700 dark:text-gray-300">
           {{ t('onboarding.intro') }}
         </p>
@@ -349,10 +354,10 @@ const citySubtitle = computed(() => t(cityConfig.value.subtitleKey));
             size="xs"
             variant="ghost"
             color="neutral"
-            class="font-medium"
+            class="font-medium tracking-tight"
             @click="toggleLocale"
           >
-            {{ locale === 'sv' ? '🇸🇪' : '🇬🇧' }}
+            🇸🇪 ⇄ 🇬🇧
           </UButton>
           <UButton
             size="xs"
