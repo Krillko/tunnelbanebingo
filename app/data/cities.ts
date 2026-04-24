@@ -8,6 +8,7 @@ export const cityConfigs: Record<CityId, CityConfig> = {
     slug: '',
     titleKey: 'cities.stockholm.title',
     subtitleKey: 'cities.stockholm.subtitle',
+    metaDescriptionKey: 'cities.stockholm.metaDescription',
     center: [59.332, 18.065],
     zoom: 11,
     lines: [
@@ -25,6 +26,7 @@ export const cityConfigs: Record<CityId, CityConfig> = {
     slug: 'gothenburg',
     titleKey: 'cities.gothenburg.title',
     subtitleKey: 'cities.gothenburg.subtitle',
+    metaDescriptionKey: 'cities.gothenburg.metaDescription',
     center: [57.705, 11.965],
     zoom: 12,
     lines: [

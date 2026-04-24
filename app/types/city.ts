@@ -11,6 +11,7 @@ export interface CityConfig {
   slug: string;
   titleKey: string;
   subtitleKey: string;
+  metaDescriptionKey: string;
   center: [number, number];
   zoom: number;
   lines: LineConfig[];

@@ -186,6 +186,13 @@ function toggleLocale() {
 
 const isDark = computed(() => colorMode.value === 'dark');
 
+useSeoMeta({
+  title: () => t(cityConfig.value.titleKey),
+  description: () => t(cityConfig.value.metaDescriptionKey),
+  ogTitle: () => t(cityConfig.value.titleKey),
+  ogDescription: () => t(cityConfig.value.metaDescriptionKey),
+});
+
 const cityTitle = computed(() => t(cityConfig.value.titleKey));
 const citySubtitle = computed(() => t(cityConfig.value.subtitleKey));
 </script>

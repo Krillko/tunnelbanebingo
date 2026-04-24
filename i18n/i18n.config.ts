@@ -10,10 +10,12 @@ export default defineI18nConfig(() => ({
         stockholm: {
           title: 'Tunnelbana Bingo',
           subtitle: 'Slumpa en station på Stockholms tunnelbana / Spårvägar',
+          metaDescription: 'Slumpa fram en station på Stockholms tunnelbana som du inte besökt än. Perfekt för att utforska staden ett stopp i taget.',
         },
         gothenburg: {
           title: 'Spårvagnsbingo',
           subtitle: 'Slumpa en spårvagnshållplats i Göteborg',
+          metaDescription: 'Slumpa fram en spårvagnshållplats i Göteborg som du inte besökt än. Perfekt för att utforska staden ett stopp i taget.',
         },
       },
       onboarding: {
@@ -117,10 +119,12 @@ export default defineI18nConfig(() => ({
         stockholm: {
           title: 'Subway Bingo',
           subtitle: 'Spin a random station on Stockholm\'s metro / tram network',
+          metaDescription: 'Spin a random Stockholm metro station you haven\'t visited yet. Perfect for exploring the city one stop at a time.',
         },
         gothenburg: {
           title: 'Tram Bingo',
           subtitle: 'Spin a random tram stop in Gothenburg',
+          metaDescription: 'Spin a random Gothenburg tram stop you haven\'t visited yet. Perfect for exploring the city one stop at a time.',
         },
       },
       onboarding: {
