@@ -1,6 +1,7 @@
 # TunnelbaneBingo
 
-A Stockholm subway bingo game. Hit the button, watch a casino-style animation randomly pick a T-bana station, then go visit it.
+A Stockholm subway bingo game. Hit the button, watch a casino-style animation randomly pick a T-bana station, then go visit it.  
+Now also with Gothenburg. So I guess I need a better name.
 
 ## What it does
 
