@@ -48,7 +48,7 @@ const { trackEvent } = useGoatCounter();
 const { venues, loading: venuesLoading, fetchVenues, clear: clearVenues } = useNearbyVenues();
 
 watch(winner, (w) => {
-  if (w) fetchVenues(w.lat, w.lng);
+  if (w) fetchVenues(w.id, w.lat, w.lng);
   else clearVenues();
 });
 
