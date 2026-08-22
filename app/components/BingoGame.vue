@@ -2,6 +2,7 @@
 import { cityConfigs, getCityStations, getCityRoutes } from '~/data/cities';
 import { createTravelTimeGraph } from '~/utils/travelTime';
 import type { CityId } from '~/types/city';
+import type { Station } from '~/types/station';
 
 const props = defineProps<{
   cityId: CityId;
@@ -95,24 +96,42 @@ const LINE_LABELS = computed<Record<string, string>>(() =>
 );
 
 // Stations shared between lines (e.g. T-Centralen) belong to every line they're
-// physically served by, not just their primary `station.line`.
-const stationLineIds = computed(() => {
-  const map = new Map<string, Set<string>>();
+// physically served by, not just their primary `station.line`. Order follows each
+// line's route path (route.stationIds), not the arbitrary order stations are
+// defined in — otherwise shared stations (only defined once, under one line's data
+// block) would sort to wherever that block happens to fall instead of their real
+// position along this line.
+const stationLineOrder = computed(() => {
+  const order = new Map<string, string[]>();
+  const seen = new Map<string, Set<string>>();
   cityRoutes.value.forEach(route => {
+    if (!order.has(route.line)) {
+      order.set(route.line, []);
+      seen.set(route.line, new Set());
+    }
+    const ids = order.get(route.line)!;
+    const seenIds = seen.get(route.line)!;
     route.stationIds.forEach(id => {
-      if (!map.has(id)) map.set(id, new Set());
-      map.get(id)!.add(route.line);
+      if (!seenIds.has(id)) {
+        seenIds.add(id);
+        ids.push(id);
+      }
     });
   });
-  return map;
+  return order;
 });
 
 const stationsByLine = computed(() => {
+  const stationById = new Map(cityStations.value.map(s => [s.id, s]));
   const result: Record<string, typeof cityStations.value> = {};
   for (const line of cityConfig.value.lines) {
-    result[line.id] = cityStations.value.filter(s =>
-      (stationLineIds.value.get(s.id) ?? new Set([s.line])).has(line.id)
-    );
+    const orderedIds = stationLineOrder.value.get(line.id) ?? [];
+    const ordered = orderedIds
+      .map(id => stationById.get(id))
+      .filter((s): s is Station => !!s);
+    const coveredIds = new Set(ordered.map(s => s.id));
+    const uncovered = cityStations.value.filter(s => s.line === line.id && !coveredIds.has(s.id));
+    result[line.id] = [...ordered, ...uncovered];
   }
   return result;
 });
