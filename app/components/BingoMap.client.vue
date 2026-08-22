@@ -17,11 +17,15 @@ const props = defineProps<{
   vehicles: Vehicle[];
   tramsIncluded: boolean;
   darkMode: boolean;
+  visitedIds: Set<string>;
 }>();
 
 const emit = defineEmits<{
   ready: [];
+  toggleVisited: [id: string];
 }>();
+
+const { t } = useI18n();
 
 function normalStyle(line: string): L.CircleMarkerOptions {
   return { radius: 6, fillColor: props.lineColors[line] ?? '#888', color: '#fff', weight: 2, fillOpacity: 0.9, interactive: true };
@@ -40,6 +44,29 @@ const vehicleStyle: L.CircleMarkerOptions = {
   interactive: false,
 };
 
+function buildStationPopup(station: Station, marker: L.CircleMarker): HTMLElement {
+  const wrapper = document.createElement('div');
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'station-popup-btn';
+  btn.textContent = props.visitedIds.has(station.id) ? t('map.unmarkVisited') : t('map.markVisited');
+  btn.addEventListener('click', () => {
+    emit('toggleVisited', station.id);
+    marker.closePopup();
+  });
+  wrapper.appendChild(btn);
+  return wrapper;
+}
+
+function checkmarkIcon(): L.DivIcon {
+  return L.divIcon({
+    className: '',
+    html: '<div style="width:12px;height:12px;border-radius:50%;background:#16a34a;border:1.5px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;"><svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>',
+    iconSize: [12, 12],
+    iconAnchor: [-2, 14],
+  });
+}
+
 const TILE_URL_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 const TILE_URL_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 
@@ -48,6 +75,7 @@ let map: L.Map;
 let tileLayer: L.TileLayer | null = null;
 const markerMap = new Map<string, L.CircleMarker>();
 const vehicleMarkers = new Map<string, L.CircleMarker>();
+const checkmarkMarkers = new Map<string, L.Marker>();
 const tramPolylines: L.Polyline[] = [];
 
 const tramLineSet = computed(() => new Set(props.tramLineIds));
@@ -93,13 +121,47 @@ onMounted(async() => {
   props.stations.forEach(station => {
     const marker = L.circleMarker([station.lat, station.lng], normalStyle(station.line));
     marker.bindTooltip(station.name, { permanent: false, direction: 'top', offset: [0, -8] });
+    marker.bindPopup(() => buildStationPopup(station, marker), { closeButton: false, offset: [0, -4] });
     markerMap.set(station.id, marker);
     if (!tramLineSet.value.has(station.line) || props.tramsIncluded) {
       marker.addTo(map);
     }
   });
 
+  props.stations.forEach(station => {
+    if (props.visitedIds.has(station.id) && (!tramLineSet.value.has(station.line) || props.tramsIncluded)) {
+      addCheckmark(station);
+    }
+  });
+
   emit('ready');
+});
+
+function addCheckmark(station: Station) {
+  if (checkmarkMarkers.has(station.id)) return;
+  const marker = L.marker([station.lat, station.lng], { icon: checkmarkIcon(), interactive: false });
+  marker.addTo(map);
+  checkmarkMarkers.set(station.id, marker);
+}
+
+function removeCheckmark(id: string) {
+  checkmarkMarkers.get(id)?.remove();
+  checkmarkMarkers.delete(id);
+}
+
+watch(() => props.visitedIds, (newSet, oldSet) => {
+  if (!map) return;
+  const stationById = new Map(props.stations.map(s => [s.id, s]));
+  newSet.forEach(id => {
+    if (oldSet?.has(id)) return;
+    const station = stationById.get(id);
+    if (station && (!tramLineSet.value.has(station.line) || props.tramsIncluded)) {
+      addCheckmark(station);
+    }
+  });
+  oldSet?.forEach(id => {
+    if (!newSet.has(id)) removeCheckmark(id);
+  });
 });
 
 watch(() => props.darkMode, (dark) => {
@@ -113,6 +175,11 @@ watch(() => props.tramsIncluded, (included) => {
     if (!marker) return;
     if (included) marker.addTo(map);
     else marker.remove();
+
+    if (props.visitedIds.has(s.id)) {
+      if (included) addCheckmark(s);
+      else removeCheckmark(s.id);
+    }
   });
   tramPolylines.forEach(poly => {
     if (included) poly.addTo(map);
@@ -121,6 +188,7 @@ watch(() => props.tramsIncluded, (included) => {
 });
 
 onUnmounted(() => {
+  checkmarkMarkers.clear();
   map?.remove();
 });
 
@@ -202,3 +270,33 @@ watch(() => props.winnerId, (newId, oldId) => {
     class="w-full h-full"
     style="will-change: transform;" />
 </template>
+
+<style scoped>
+:deep(.leaflet-popup-content-wrapper) {
+  padding: 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.leaflet-popup-content) {
+  margin: 0;
+}
+
+:deep(.station-popup-btn) {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #111827;
+}
+
+:deep(.station-popup-btn:hover) {
+  background: #f3f4f6;
+}
+</style>

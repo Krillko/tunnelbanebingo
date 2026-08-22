@@ -44,6 +44,10 @@ export default defineI18nConfig(() => ({
         markedVisited: '✓ Tillagd i besökta stationer',
         playAgain: 'Spela igen',
       },
+      map: {
+        markVisited: 'Markera som besökt',
+        unmarkVisited: 'Avmarkera som besökt',
+      },
       settings: {
         homeStation: 'Hemstation',
         homeStationHint: 'Stationer nära hemmet lottas mer sannolikt.',
@@ -152,6 +156,10 @@ export default defineI18nConfig(() => ({
         markVisited: '✓ Mark as visited',
         markedVisited: '✓ Added to visited stations',
         playAgain: 'Play again',
+      },
+      map: {
+        markVisited: 'Mark as visited',
+        unmarkVisited: 'Unmark as visited',
       },
       settings: {
         homeStation: 'Home station',

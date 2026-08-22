@@ -94,10 +94,25 @@ const LINE_LABELS = computed<Record<string, string>>(() =>
   Object.fromEntries(cityConfig.value.lines.map(l => [l.id, t(l.nameKey)]))
 );
 
+// Stations shared between lines (e.g. T-Centralen) belong to every line they're
+// physically served by, not just their primary `station.line`.
+const stationLineIds = computed(() => {
+  const map = new Map<string, Set<string>>();
+  cityRoutes.value.forEach(route => {
+    route.stationIds.forEach(id => {
+      if (!map.has(id)) map.set(id, new Set());
+      map.get(id)!.add(route.line);
+    });
+  });
+  return map;
+});
+
 const stationsByLine = computed(() => {
   const result: Record<string, typeof cityStations.value> = {};
   for (const line of cityConfig.value.lines) {
-    result[line.id] = cityStations.value.filter(s => s.line === line.id);
+    result[line.id] = cityStations.value.filter(s =>
+      (stationLineIds.value.get(s.id) ?? new Set([s.line])).has(line.id)
+    );
   }
   return result;
 });
@@ -301,7 +316,9 @@ const citySubtitle = computed(() => t(cityConfig.value.subtitleKey));
         :vehicles="vehicles"
         :trams-included="tramsIncluded"
         :dark-mode="isDark"
+        :visited-ids="visitedSet"
         @ready="mapReady = true"
+        @toggle-visited="toggle"
       />
     </div>
 
