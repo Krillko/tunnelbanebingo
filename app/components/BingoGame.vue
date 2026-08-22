@@ -52,6 +52,12 @@ watch(winner, (w) => {
   else clearVenues();
 });
 
+const googleMapsUrl = computed(() => {
+  if (!winner.value) return '';
+  const query = 'restaurants and bars open now';
+  return `https://www.google.com/maps/search/${encodeURIComponent(query)}/@${winner.value.lat},${winner.value.lng},16z`;
+});
+
 type HomeSelectItem = { label: string; value: string };
 const homeStationSelectItems = computed<HomeSelectItem[]>(() =>
   cityStations.value
@@ -514,6 +520,22 @@ const citySubtitle = computed(() => t(cityConfig.value.subtitleKey));
                     {{ t('bingo.disclaimer') }}
                   </p>
                 </div>
+              </div>
+
+              <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 text-left">
+                <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">
+                  {{ t('bingo.findInMaps') }}
+                </p>
+                <UButton
+                  :to="googleMapsUrl"
+                  target="_blank"
+                  variant="outline"
+                  size="sm"
+                  block
+                  icon="i-heroicons-map-pin"
+                >
+                  {{ t('bingo.openInGoogleMaps') }}
+                </UButton>
               </div>
             </div>
 

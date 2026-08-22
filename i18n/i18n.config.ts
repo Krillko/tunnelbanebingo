@@ -43,6 +43,8 @@ export default defineI18nConfig(() => ({
         markVisited: '✓ Markera som besökt',
         markedVisited: '✓ Tillagd i besökta stationer',
         playAgain: 'Spela igen',
+        findInMaps: 'Hitta fler ställen',
+        openInGoogleMaps: 'Hitta ställen i Google Maps',
       },
       map: {
         markVisited: 'Markera som besökt',
@@ -156,6 +158,8 @@ export default defineI18nConfig(() => ({
         markVisited: '✓ Mark as visited',
         markedVisited: '✓ Added to visited stations',
         playAgain: 'Play again',
+        findInMaps: 'Find more places',
+        openInGoogleMaps: 'Find places in Google Maps',
       },
       map: {
         markVisited: 'Mark as visited',
