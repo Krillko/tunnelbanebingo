@@ -27,7 +27,8 @@ npx eslint --fix [files]   # Lint and auto-fix
 - **Nuxt 4** with Vue 3.5+ (Composition API, `<script setup>`), `ssr: false` (SPA)
 - **@nuxt/ui** v4 — component library (auto-imported components like `UButton`, `UInput`, etc.)
 - **Tailwind CSS v4** — configured via `app/assets/css/main.css` (not a JS config file)
-- **Leaflet** — map rendering with CartoDB Positron tiles (free, no API key)
+- **Leaflet** + **MapLibre GL** — map rendering with OpenFreeMap vector tiles (free, no API key).
+  Keep `maplibre-gl` on v5 — v6 drops the worker chunk and the map goes blank with no console error.
 - **@nuxt/eslint** — ESLint integration with Nuxt-aware rules
 - TypeScript strict mode with `noUncheckedIndexedAccess` and `verbatimModuleSyntax`
 
@@ -41,6 +42,9 @@ Key files:
 - `app/assets/css/main.css` — Tailwind v4 + Nuxt UI CSS entry point (required for styles to load)
 - `app/data/stations.ts` — all ~100 Stockholm T-bana stations with OSM-accurate lat/lng, grouped by line
 - `app/data/routes.ts` — ordered station ID arrays per branch, used to draw polylines on the map
+- `app/data/venues.ts` — AUTO-GENERATED nearby bars/pubs/cafés/restaurants per station.
+  Regenerate with `npm run venues` (`scripts/fetch-venues.mjs`); never hand-edit.
+  Pre-baked deliberately: live Overpass calls were unreliable, and one mirror returns 200 OK with an empty body (see README)
 - `app/components/BingoMap.client.vue` — Leaflet map, `.client.vue` suffix prevents SSR
 - `app/composables/useBingoAnimation.ts` — slot-machine animation state machine (pre-picks winner, quadratic ease-out over 4s)
 - `app/composables/useTickSound.ts` — Web Audio API casino tick sounds (no audio files, oscillator-based)
