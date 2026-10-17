@@ -81,6 +81,39 @@ const tramPolylines: L.Polyline[] = [];
 
 const tramLineSet = computed(() => new Set(props.tramLineIds));
 
+const FIT_PADDING = L.point(28, 28);
+const FIT_MAX_ZOOM = 15;
+
+let homeView: { center: L.LatLng; zoom: number } | null = null;
+let programmaticMove = false;
+let userMoved = false;
+let resizeObserver: ResizeObserver | null = null;
+
+function visibleBounds(): L.LatLngBounds | null {
+  const points = props.stations
+    .filter(s => !tramLineSet.value.has(s.line) || props.tramsIncluded)
+    .map(s => [s.lat, s.lng] as [number, number]);
+  return points.length ? L.latLngBounds(points) : null;
+}
+
+// Zoom in as far as the viewport allows while every station stays visible.
+function fitToStations(animate = false) {
+  const bounds = visibleBounds();
+  if (!bounds) return;
+  homeView = {
+    center: bounds.getCenter(),
+    zoom: Math.min(map.getBoundsZoom(bounds, false, FIT_PADDING), FIT_MAX_ZOOM),
+  };
+  programmaticMove = true;
+  map.fitBounds(bounds, { padding: FIT_PADDING, maxZoom: FIT_MAX_ZOOM, animate });
+}
+
+function flyHome() {
+  if (!homeView) return;
+  programmaticMove = true;
+  map.flyTo(homeView.center, homeView.zoom, { duration: 1 });
+}
+
 onMounted(async() => {
   await nextTick();
   if (!mapEl.value) return;
@@ -89,7 +122,11 @@ onMounted(async() => {
     zoom: props.zoom,
     zoomControl: true,
     maxZoom: 19,
+    zoomSnap: 0.25,
   });
+
+  map.on('moveend zoomend', () => { programmaticMove = false; });
+  map.on('movestart zoomstart', () => { if (!programmaticMove) userMoved = true; });
 
   map.attributionControl.addAttribution(
     '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://openfreemap.org/">OpenFreeMap</a>'
@@ -138,6 +175,17 @@ onMounted(async() => {
       addCheckmark(station);
     }
   });
+
+  fitToStations();
+
+  // The map lives in a flex layout — keep the untouched view optimally framed as it resizes.
+  resizeObserver = new ResizeObserver(() => {
+    programmaticMove = true;
+    map.invalidateSize();
+    if (!userMoved && !props.winnerId) fitToStations();
+    else programmaticMove = false;
+  });
+  resizeObserver.observe(mapEl.value);
 
   emit('ready');
 });
@@ -190,9 +238,11 @@ watch(() => props.tramsIncluded, (included) => {
     if (included) poly.addTo(map);
     else poly.remove();
   });
+  if (!userMoved && !props.winnerId) fitToStations(true);
 });
 
 onUnmounted(() => {
+  resizeObserver?.disconnect();
   checkmarkMarkers.clear();
   map?.remove();
 });
@@ -248,6 +298,7 @@ watch(() => props.highlightedId, (newId, oldId) => {
 
 watch(() => props.animationTarget, (target) => {
   if (target) {
+    programmaticMove = true;
     map.flyTo([target.lat, target.lng], 12, { duration: 4, easeLinearity: 0.5 });
   }
 });
@@ -261,10 +312,11 @@ watch(() => props.winnerId, (newId, oldId) => {
     const s = props.stations.find(st => st.id === newId);
     if (s) {
       markerMap.get(newId)?.setStyle(winnerStyle(s.line));
+      programmaticMove = true;
       map.flyTo([s.lat, s.lng], 14, { duration: 1.2 });
     }
   } else {
-    map.flyTo(props.center, props.zoom, { duration: 1 });
+    flyHome();
   }
 });
 </script>
