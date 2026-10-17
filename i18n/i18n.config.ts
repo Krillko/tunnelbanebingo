@@ -34,6 +34,9 @@ export default defineI18nConfig(() => ({
       },
       bingo: {
         button: '🎰 Slumpa!',
+        findNearMe: 'Hitta nära mig',
+        nearMeAllVisited: 'Grattis, du har redan besökt allt i närheten!',
+        nearMeLocationError: 'Kunde inte hämta din plats. Kontrollera platsbehörigheten.',
         loadingMap: 'Laddar karta...',
         allVisited: 'Alla stationer är besökta! Avmarkera i Inställningar.',
         spinning: 'Drar lott...',
@@ -149,6 +152,9 @@ export default defineI18nConfig(() => ({
       },
       bingo: {
         button: '🎰 Randomize!',
+        findNearMe: 'Find near me',
+        nearMeAllVisited: 'Congratulations, you already visited everything nearby!',
+        nearMeLocationError: 'Could not get your location. Check your location permission.',
         loadingMap: 'Loading map...',
         allVisited: 'All stations visited! Uncheck some in Settings.',
         spinning: 'Drawing...',

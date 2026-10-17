@@ -1,7 +1,12 @@
 import type { Station } from '~/types/station';
 import type { Route } from '~/data/routes';
 
+// Default Stockholm instance (backwards compatibility)
+import { stations } from '~/data/stations';
+import { routes } from '~/data/routes';
+
 type NodeKey = string;
+type Graph = Map<NodeKey, Array<{ cost: number; to: NodeKey }>>;
 
 const AVG_SPEED_KMH = 30;
 const METRO_TRANSFER_MIN = 5;
@@ -22,28 +27,26 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export function createTravelTimeGraph(
+export function findNearestStation(lat: number, lng: number, stations: Station[]): Station | null {
+  let nearest: Station | null = null;
+  let nearestDistKm = Infinity;
+  for (const station of stations) {
+    const distKm = haversineKm(lat, lng, station.lat, station.lng);
+    if (distKm < nearestDistKm) {
+      nearestDistKm = distKm;
+      nearest = station;
+    }
+  }
+  return nearest;
+}
+
+function buildLineGraph(
   cityStations: Station[],
   cityRoutes: Route[],
-): (sourceId: string) => Map<string, number> {
-  const stationLookup = new Map(cityStations.map(s => [s.id, s]));
-
-  function edgeMinutes(idA: string, idB: string): number {
-    const a = stationLookup.get(idA);
-    const b = stationLookup.get(idB);
-    if (!a || !b) return 3;
-    return (haversineKm(a.lat, a.lng, b.lat, b.lng) / AVG_SPEED_KMH) * 60;
-  }
-
-  function transferCost(lineA: string, lineB: string): number {
-    const aMetro = METRO_LINES.has(lineA);
-    const bMetro = METRO_LINES.has(lineB);
-    if (aMetro && bMetro) return METRO_TRANSFER_MIN;
-    if (aMetro || bMetro) return TRAM_TRANSFER_MIN;
-    return TRAM_ONLY_TRANSFER_MIN;
-  }
-
-  const adj = new Map<NodeKey, Array<{ cost: number; to: NodeKey }>>();
+  edgeCost: (idA: string, idB: string) => number,
+  transferCost: (lineA: string, lineB: string) => number
+): { adj: Graph; stationToNodes: Map<string, NodeKey[]> } {
+  const adj: Graph = new Map();
   const stationToNodes = new Map<string, NodeKey[]>();
 
   function addEdge(from: NodeKey, to: NodeKey, cost: number): void {
@@ -61,7 +64,7 @@ export function createTravelTimeGraph(
       if (!idA || !idB) continue;
       const nodeA = `${idA}::${line}`;
       const nodeB = `${idB}::${line}`;
-      const cost = edgeMinutes(idA, idB);
+      const cost = edgeCost(idA, idB);
       addEdge(nodeA, nodeB, cost);
       addEdge(nodeB, nodeA, cost);
     }
@@ -90,49 +93,86 @@ export function createTravelTimeGraph(
     }
   }
 
-  return function travelTimesFrom(sourceId: string): Map<string, number> {
-    const sourceNodes = stationToNodes.get(sourceId);
-    if (!sourceNodes?.length) return new Map();
-
-    const dist = new Map<NodeKey, number>();
-    const heap: Array<[number, NodeKey]> = [];
-
-    const push = (cost: number, node: NodeKey): void => {
-      heap.push([cost, node]);
-      heap.sort((a, b) => a[0] - b[0]);
-    };
-
-    for (const node of sourceNodes) {
-      dist.set(node, 0);
-      push(0, node);
-    }
-
-    while (heap.length > 0) {
-      const entry = heap.shift();
-      if (!entry) break;
-      const [d, u] = entry;
-      if (d > (dist.get(u) ?? Infinity)) continue;
-      for (const { cost, to } of (adj.get(u) ?? [])) {
-        const nd = d + cost;
-        if (nd < (dist.get(to) ?? Infinity)) {
-          dist.set(to, nd);
-          push(nd, to);
-        }
-      }
-    }
-
-    const result = new Map<string, number>();
-    for (const [key, d] of dist) {
-      const stationId = key.split('::')[0];
-      if (!stationId) continue;
-      const existing = result.get(stationId);
-      if (existing === undefined || d < existing) result.set(stationId, d);
-    }
-    return result;
-  };
+  return { adj, stationToNodes };
 }
 
-// Default Stockholm instance (backwards compatibility)
-import { stations } from '~/data/stations';
-import { routes } from '~/data/routes';
+function dijkstraFromStation(
+  sourceId: string,
+  adj: Graph,
+  stationToNodes: Map<string, NodeKey[]>
+): Map<string, number> {
+  const sourceNodes = stationToNodes.get(sourceId);
+  if (!sourceNodes?.length) return new Map();
+
+  const dist = new Map<NodeKey, number>();
+  const heap: Array<[number, NodeKey]> = [];
+
+  const push = (cost: number, node: NodeKey): void => {
+    heap.push([cost, node]);
+    heap.sort((a, b) => a[0] - b[0]);
+  };
+
+  for (const node of sourceNodes) {
+    dist.set(node, 0);
+    push(0, node);
+  }
+
+  while (heap.length > 0) {
+    const entry = heap.shift();
+    if (!entry) break;
+    const [d, u] = entry;
+    if (d > (dist.get(u) ?? Infinity)) continue;
+    for (const { cost, to } of (adj.get(u) ?? [])) {
+      const nd = d + cost;
+      if (nd < (dist.get(to) ?? Infinity)) {
+        dist.set(to, nd);
+        push(nd, to);
+      }
+    }
+  }
+
+  const result = new Map<string, number>();
+  for (const [key, d] of dist) {
+    const stationId = key.split('::')[0];
+    if (!stationId) continue;
+    const existing = result.get(stationId);
+    if (existing === undefined || d < existing) result.set(stationId, d);
+  }
+  return result;
+}
+
+export function createTravelTimeGraph(
+  cityStations: Station[],
+  cityRoutes: Route[]
+): (sourceId: string) => Map<string, number> {
+  const stationLookup = new Map(cityStations.map(s => [s.id, s]));
+
+  function edgeMinutes(idA: string, idB: string): number {
+    const a = stationLookup.get(idA);
+    const b = stationLookup.get(idB);
+    if (!a || !b) return 3;
+    return (haversineKm(a.lat, a.lng, b.lat, b.lng) / AVG_SPEED_KMH) * 60;
+  }
+
+  function transferCost(lineA: string, lineB: string): number {
+    const aMetro = METRO_LINES.has(lineA);
+    const bMetro = METRO_LINES.has(lineB);
+    if (aMetro && bMetro) return METRO_TRANSFER_MIN;
+    if (aMetro || bMetro) return TRAM_TRANSFER_MIN;
+    return TRAM_ONLY_TRANSFER_MIN;
+  }
+
+  const { adj, stationToNodes } = buildLineGraph(cityStations, cityRoutes, edgeMinutes, transferCost);
+  return (sourceId: string) => dijkstraFromStation(sourceId, adj, stationToNodes);
+}
+
+// Hop-count graph: each stop between adjacent stations costs 1, transferring lines at the same
+// station is free — used to find stations "N stops away" regardless of travel time.
+export function createStopsGraph(
+  cityStations: Station[],
+  cityRoutes: Route[]
+): (sourceId: string) => Map<string, number> {
+  const { adj, stationToNodes } = buildLineGraph(cityStations, cityRoutes, () => 1, () => 0);
+  return (sourceId: string) => dijkstraFromStation(sourceId, adj, stationToNodes);
+}
 export const travelTimesFrom = createTravelTimeGraph(stations, routes);

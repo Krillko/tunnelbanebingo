@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { cityConfigs, getCityStations, getCityRoutes } from '~/data/cities';
-import { createTravelTimeGraph } from '~/utils/travelTime';
+import { createTravelTimeGraph, createStopsGraph, findNearestStation } from '~/utils/travelTime';
 import type { CityId } from '~/types/city';
 import type { Station } from '~/types/station';
+
+const NEAR_ME_MAX_STOPS = 3;
 
 const props = defineProps<{
   cityId: CityId;
@@ -23,6 +25,9 @@ const lineColors = computed<Record<string, string>>(() =>
 const travelTimesFromFn = computed(() =>
   createTravelTimeGraph(cityStations.value, cityRoutes.value)
 );
+const stopsFromFn = computed(() =>
+  createStopsGraph(cityStations.value, cityRoutes.value)
+);
 
 const { visitedSet, toggle, markVisited } = useVisitedStations(props.cityId);
 const { homeStationId, setHome } = useHomeStation(props.cityId);
@@ -40,8 +45,11 @@ const eligibleStations = computed(() =>
   )
 );
 
+const nearMeOverride = ref<Station[] | null>(null);
+const bingoStations = computed(() => nearMeOverride.value ?? eligibleStations.value);
+
 const { animationState, currentHighlight, winner, animationTarget, startBingo, reset } =
-  useBingoAnimation(eligibleStations, homeStationId, travelTimesFromFn.value);
+  useBingoAnimation(bingoStations, homeStationId, travelTimesFromFn.value);
 
 const { trackEvent } = useGoatCounter();
 
@@ -174,12 +182,48 @@ watch(winner, (w) => {
 });
 
 function handleReset() {
+  nearMeMessage.value = null;
   reset();
 }
 
 function handleStartBingo() {
+  nearMeMessage.value = null;
   trackEvent('randomize', 'Randomize pressed');
   startBingo();
+}
+
+const { getCurrentPosition } = useGeolocation();
+const nearMeLoading = ref(false);
+const nearMeMessage = ref<string | null>(null);
+
+async function handleFindNearMe() {
+  if (animationState.value !== 'idle' || nearMeLoading.value) return;
+
+  nearMeMessage.value = null;
+  nearMeLoading.value = true;
+  trackEvent('near-me', 'Find near me pressed');
+
+  try {
+    const { lat, lng } = await getCurrentPosition();
+    const nearestStation = findNearestStation(lat, lng, cityStations.value);
+    if (!nearestStation) return;
+
+    const stops = stopsFromFn.value(nearestStation.id);
+    const nearby = eligibleStations.value.filter(s => (stops.get(s.id) ?? Infinity) <= NEAR_ME_MAX_STOPS);
+
+    if (nearby.length === 0) {
+      nearMeMessage.value = t('bingo.nearMeAllVisited');
+      return;
+    }
+
+    nearMeOverride.value = nearby;
+    startBingo();
+    nearMeOverride.value = null;
+  } catch {
+    nearMeMessage.value = t('bingo.nearMeLocationError');
+  } finally {
+    nearMeLoading.value = false;
+  }
 }
 
 function addWinnerToVisited() {
@@ -460,6 +504,20 @@ const citySubtitle = computed(() => t(cityConfig.value.subtitleKey));
             >
               {{ t('bingo.button') }}
             </UButton>
+            <UButton
+              size="md"
+              variant="soft"
+              block
+              :loading="nearMeLoading"
+              :disabled="!mapReady || eligibleStations.length === 0 || nearMeLoading"
+              icon="i-heroicons-map-pin"
+              @click="handleFindNearMe"
+            >
+              {{ t('bingo.findNearMe') }}
+            </UButton>
+            <p v-if="nearMeMessage" class="text-xs text-gray-500 dark:text-gray-400 text-center">
+              {{ nearMeMessage }}
+            </p>
             <p v-if="!mapReady" class="text-xs text-gray-400 dark:text-gray-500 text-center">
               {{ t('bingo.loadingMap') }}
             </p>
