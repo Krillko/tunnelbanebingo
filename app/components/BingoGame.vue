@@ -53,10 +53,10 @@ const { animationState, currentHighlight, winner, animationTarget, startBingo, r
 
 const { trackEvent } = useGoatCounter();
 
-const { venues, loading: venuesLoading, fetchVenues, clear: clearVenues } = useNearbyVenues();
+const { venues, fetchVenues, clear: clearVenues } = useNearbyVenues();
 
 watch(winner, (w) => {
-  if (w) fetchVenues(w.id, w.lat, w.lng);
+  if (w) fetchVenues(w.id);
   else clearVenues();
 });
 
@@ -554,15 +554,11 @@ const citySubtitle = computed(() => t(cityConfig.value.subtitleKey));
                 {{ LINE_LABELS[winner.line] ?? winner.line }}
               </span>
 
-              <div v-if="venuesLoading || venues.length" class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+              <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
                 <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">
                   {{ t('bingo.nearStation') }}
                 </p>
-                <div v-if="venuesLoading" class="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
-                  <UIcon name="i-heroicons-arrow-path" class="animate-spin size-3 shrink-0" />
-                  {{ t('bingo.searchingPlaces') }}
-                </div>
-                <div v-else class="flex flex-col gap-1.5">
+                <div v-if="venues.length" class="flex flex-col gap-1.5">
                   <a
                     v-for="venue in venues"
                     :key="venue.id"
@@ -574,15 +570,18 @@ const citySubtitle = computed(() => t(cityConfig.value.subtitleKey));
                     <span class="truncate text-gray-800 dark:text-gray-200">{{ venue.name }}</span>
                     <span class="shrink-0 text-xs text-gray-400 dark:text-gray-500">{{ venue.distanceM }} m</span>
                   </a>
-                  <p v-if="venues.length" class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
                     {{ t('bingo.disclaimer') }}
                   </p>
                 </div>
+                <p v-else class="text-sm text-gray-500 dark:text-gray-400">
+                  {{ t('bingo.noPlacesFound') }}
+                </p>
               </div>
 
               <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 text-left">
                 <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">
-                  {{ t('bingo.findInMaps') }}
+                  {{ venues.length ? t('bingo.findInMaps') : t('bingo.findOnGoogleInstead') }}
                 </p>
                 <UButton
                   :to="googleMapsUrl"
