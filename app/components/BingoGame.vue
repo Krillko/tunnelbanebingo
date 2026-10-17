@@ -178,6 +178,15 @@ const visitedCount = computed(() =>
   visibleStations.value.filter(s => visitedSet.value.has(s.id)).length
 );
 
+// Circular progress ring under the "find near me" button
+const RING_RADIUS = 26;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+const visitedFraction = computed(() =>
+  visibleStations.value.length === 0 ? 0 : visitedCount.value / visibleStations.value.length
+);
+const ringDashOffset = computed(() => RING_CIRCUMFERENCE * (1 - visitedFraction.value));
+const visitedPercent = computed(() => Math.round(visitedFraction.value * 100));
+
 let confettiFn: ((opts: object) => void) | null = null;
 async function fire(opts: object) {
   if (!confettiFn) {
@@ -551,6 +560,39 @@ const citySubtitle = computed(() => t(cityConfig.value.subtitleKey));
             <p v-if="nearMeMessage" class="text-xs text-gray-500 dark:text-gray-400 text-center">
               {{ nearMeMessage }}
             </p>
+            <div class="flex flex-col items-center gap-1 pt-1">
+              <div class="relative w-[60px] h-[60px]">
+                <svg class="w-full h-full -rotate-90" viewBox="0 0 60 60">
+                  <circle
+                    class="text-gray-200 dark:text-gray-700"
+                    cx="30"
+                    cy="30"
+                    :r="RING_RADIUS"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="5"
+                  />
+                  <circle
+                    class="text-primary transition-[stroke-dashoffset] duration-500"
+                    cx="30"
+                    cy="30"
+                    :r="RING_RADIUS"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="5"
+                    stroke-linecap="round"
+                    :stroke-dasharray="RING_CIRCUMFERENCE"
+                    :stroke-dashoffset="ringDashOffset"
+                  />
+                </svg>
+                <span class="absolute inset-0 flex items-center justify-center text-sm font-semibold text-gray-900 dark:text-gray-100 tabular-nums">
+                  {{ visitedPercent }}%
+                </span>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 text-center tabular-nums">
+                {{ visitedCount }} / {{ visibleStations.length }} {{ t('bingo.visitedProgress').toLowerCase() }}
+              </p>
+            </div>
             <p v-if="!mapReady" class="text-xs text-gray-400 dark:text-gray-500 text-center">
               {{ t('bingo.loadingMap') }}
             </p>
