@@ -39,8 +39,12 @@ let _pendingResolve: ((token: string) => void) | null = null;
 let _pendingReject: ((err: Error) => void) | null = null;
 let _debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
+function gis(): GoogleIdentityServices | undefined {
+  return (window as unknown as { google?: GoogleIdentityServices }).google;
+}
+
 async function loadGis(): Promise<void> {
-  if (window.google?.accounts) return;
+  if (gis()?.accounts) return;
   if (_gisPromise) return _gisPromise;
   _gisPromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
@@ -55,16 +59,17 @@ async function loadGis(): Promise<void> {
 
 function ensureTokenClient(clientId: string) {
   if (_tokenClient) return;
-  _tokenClient = window.google!.accounts.oauth2.initTokenClient({
+  _tokenClient = gis()!.accounts.oauth2.initTokenClient({
     client_id: clientId,
     scope: 'https://www.googleapis.com/auth/drive.appdata',
     callback: (resp) => {
       if (resp.error || !resp.access_token) {
         _pendingReject?.(new Error(resp.error ?? 'auth_failed'));
       } else {
-        _accessToken = resp.access_token;
+        const token = resp.access_token;
+        _accessToken = token;
         _tokenExpiresAt = Date.now() + (resp.expires_in - 60) * 1000;
-        _pendingResolve?.(_accessToken);
+        _pendingResolve?.(token);
       }
       _pendingResolve = null;
       _pendingReject = null;

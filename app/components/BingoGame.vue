@@ -37,12 +37,20 @@ const { soundEnabled, setSoundEnabled } = useSoundEnabled();
 const { unlock: unlockSound, playTick } = useTickSound();
 const { vehicles } = useVehiclePositions();
 
+// These two take UCheckbox's `boolean | 'indeterminate'` emit; neither checkbox
+// is tri-state, so the value collapses to a plain boolean.
+//
 // iOS Safari only lets audio start from inside a user gesture, so flipping the
 // toggle on is the moment we create and resume the AudioContext. The short
 // confirmation tick doubles as proof to the user that it actually worked.
-function applySoundEnabled(value: boolean) {
-  setSoundEnabled(value);
-  if (value) unlockSound().then(() => playTick(1000));
+function applySoundEnabled(value: boolean | 'indeterminate') {
+  const enabled = value === true;
+  setSoundEnabled(enabled);
+  if (enabled) unlockSound().then(() => playTick(1000));
+}
+
+function applyTramsIncluded(value: boolean | 'indeterminate') {
+  setTramsIncluded(value === true);
 }
 
 function toggleSound() {
@@ -94,7 +102,7 @@ const selectedHomeStation = computed<HomeSelectItem | null>({
 });
 
 const showOnboarding = ref(!hasOnboarded.value);
-const dialogStation = ref<HomeSelectItem | null>(null);
+const dialogStation = ref<HomeSelectItem>();
 
 function confirmOnboarding() {
   if (dialogStation.value) setHome(dialogStation.value.value);
@@ -360,7 +368,7 @@ const citySubtitle = computed(() => t(cityConfig.value.subtitleKey));
           :model-value="tramsIncluded"
           :label="t('onboarding.includeRailways')"
           class="mt-4"
-          @update:model-value="setTramsIncluded"
+          @update:model-value="applyTramsIncluded"
         />
         <UCheckbox
           :model-value="soundEnabled"
@@ -795,7 +803,7 @@ const citySubtitle = computed(() => t(cityConfig.value.subtitleKey));
               :model-value="tramsIncluded"
               :label="t('settings.includeRailways')"
               class="mt-2"
-              @update:model-value="setTramsIncluded"
+              @update:model-value="applyTramsIncluded"
             />
           </div>
 
@@ -852,7 +860,9 @@ const citySubtitle = computed(() => t(cityConfig.value.subtitleKey));
         </div>
       </div>
 
-      <div class="flex flex-wrap gap-x-3 gap-y-1 justify-center pt-2">
+      <!-- Hide legend. Just gonna assume that people playing will have a base knowledge of the lines
+
+ <div class="flex flex-wrap gap-x-3 gap-y-1 justify-center pt-2">
         <div
           v-for="line in cityConfig.lines"
           :key="line.id"
@@ -861,7 +871,7 @@ const citySubtitle = computed(() => t(cityConfig.value.subtitleKey));
           <div class="w-3 h-3 rounded-full shrink-0" :style="{ backgroundColor: line.color }" />
           <span class="text-xs text-gray-500 dark:text-gray-400">{{ LINE_LABELS[line.id] }}</span>
         </div>
-      </div>
+      </div>-->
       <div class="text-center">
         <NuxtLink to="/about" class="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
           {{ t('footer.about') }}

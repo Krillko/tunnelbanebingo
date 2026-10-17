@@ -16,16 +16,13 @@ interface GisTokenClient {
   requestAccessToken(overrideConfig?: { prompt?: string }): void;
 }
 
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        oauth2: {
-          initTokenClient(config: GisTokenClientConfig): GisTokenClient;
-        };
-      };
+// Not declared on `Window` directly: @nuxt/scripts already augments
+// `window.google` with the Google Maps shape, and two conflicting
+// declarations of the same property don't merge.
+interface GoogleIdentityServices {
+  accounts: {
+    oauth2: {
+      initTokenClient(config: GisTokenClientConfig): GisTokenClient;
     };
-  }
+  };
 }
-
-export {};
