@@ -79,13 +79,13 @@ function toggleLocale() {
             <li>
               <span class="font-medium text-gray-800 dark:text-gray-200">{{ t('about.mapTiles') }}</span><br>
               <i18n-t keypath="about.mapTilesText" tag="span">
-                <template #carto>
+                <template #openfreemap>
                   <a
-                    href="https://carto.com/"
+                    href="https://openfreemap.org/"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="text-blue-600 hover:underline"
-                  >CARTO</a>
+                  >OpenFreeMap</a>
                 </template>
                 <template #osm>
                   <a

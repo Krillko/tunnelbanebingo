@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import L from 'leaflet';
+import '@maplibre/maplibre-gl-leaflet';
 import type { Station } from '~/types/station';
 import type { Vehicle } from '~/composables/useVehiclePositions';
 import type { Route } from '~/data/routes';
@@ -67,12 +68,12 @@ function checkmarkIcon(): L.DivIcon {
   });
 }
 
-const TILE_URL_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-const TILE_URL_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+const STYLE_LIGHT = 'https://tiles.openfreemap.org/styles/positron';
+const STYLE_DARK = 'https://tiles.openfreemap.org/styles/dark';
 
 const mapEl = useTemplateRef<HTMLDivElement>('mapEl');
 let map: L.Map;
-let tileLayer: L.TileLayer | null = null;
+let glLayer: L.MaplibreGL | null = null;
 const markerMap = new Map<string, L.CircleMarker>();
 const vehicleMarkers = new Map<string, L.CircleMarker>();
 const checkmarkMarkers = new Map<string, L.Marker>();
@@ -87,12 +88,16 @@ onMounted(async() => {
     center: props.center,
     zoom: props.zoom,
     zoomControl: true,
+    maxZoom: 19,
   });
 
-  tileLayer = L.tileLayer(props.darkMode ? TILE_URL_DARK : TILE_URL_LIGHT, {
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/">CARTO</a>',
-    subdomains: 'abcd',
-    maxZoom: 19,
+  map.attributionControl.addAttribution(
+    '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://openfreemap.org/">OpenFreeMap</a>'
+  );
+
+  glLayer = L.maplibreGL({
+    style: props.darkMode ? STYLE_DARK : STYLE_LIGHT,
+    attributionControl: false,
   }).addTo(map);
 
   const stationById = new Map(props.stations.map(s => [s.id, s]));
@@ -165,7 +170,7 @@ watch(() => props.visitedIds, (newSet, oldSet) => {
 });
 
 watch(() => props.darkMode, (dark) => {
-  tileLayer?.setUrl(dark ? TILE_URL_DARK : TILE_URL_LIGHT);
+  glLayer?.getMaplibreMap().setStyle(dark ? STYLE_DARK : STYLE_LIGHT);
 });
 
 watch(() => props.tramsIncluded, (included) => {

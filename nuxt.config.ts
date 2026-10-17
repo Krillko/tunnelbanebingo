@@ -29,7 +29,7 @@ export default defineNuxtConfig({
     vueI18n: 'i18n.config.ts',
   },
   ssr: false,
-  css: ['~/assets/css/main.css', 'leaflet/dist/leaflet.css'],
+  css: ['~/assets/css/main.css', 'leaflet/dist/leaflet.css', 'maplibre-gl/dist/maplibre-gl.css'],
   devServer: {
     https: {
       key: './localhost-key.pem',
