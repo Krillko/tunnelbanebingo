@@ -8,7 +8,8 @@
     "generate": "nuxt generate",
     "venues": "node scripts/fetch-venues.mjs",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "tracks": "node scripts/fetch-tracks.mjs"
   },
   "dependencies": {
     "@maplibre/maplibre-gl-leaflet": "^0.1.4",
@@ -21,6 +22,7 @@
     "canvas-confetti": "^1.9.4",
     "gtfs-realtime-bindings": "^1.1.1",
     "leaflet": "^1.9.4",
+    "leaflet-polylineoffset": "^1.1.1",
     "maplibre-gl": "^5.24.0",
     "nuxt": "^4.4.2",
     "vue": "^3.5.32",

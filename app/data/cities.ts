@@ -1,6 +1,7 @@
 import type { CityConfig, CityId } from '~/types/city';
 import { stockholmStations, gothenburgStations } from '~/data/stations';
 import { stockholmRoutes, gothenburgRoutes } from '~/data/routes';
+import { cityTracks } from '~/data/tracks';
 
 export const cityConfigs: Record<CityId, CityConfig> = {
   stockholm: {
@@ -37,8 +38,10 @@ export const cityConfigs: Record<CityId, CityConfig> = {
       { id: 'gbg-5', color: '#009999', nameKey: 'lines.gothenburg.line5' },
       { id: 'gbg-6', color: '#E31E24', nameKey: 'lines.gothenburg.line6' },
       { id: 'gbg-7', color: '#7B2D8B', nameKey: 'lines.gothenburg.line7' },
+      { id: 'gbg-8', color: '#8C5A2B', nameKey: 'lines.gothenburg.line8' },
       { id: 'gbg-9', color: '#00AEEF', nameKey: 'lines.gothenburg.line9' },
       { id: 'gbg-11', color: '#40C0C0', nameKey: 'lines.gothenburg.line11' },
+      { id: 'gbg-13', color: '#6B7280', nameKey: 'lines.gothenburg.line13' },
     ],
     hasTramToggle: false,
     tramLineIds: [],
@@ -57,4 +60,8 @@ export function getCityStations(cityId: CityId) {
 
 export function getCityRoutes(cityId: CityId) {
   return cityId === 'gothenburg' ? gothenburgRoutes : stockholmRoutes;
+}
+
+export function getCityTracks(cityId: CityId) {
+  return cityTracks[cityId] ?? [];
 }

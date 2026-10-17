@@ -1,13 +1,19 @@
 <script setup lang="ts">
 import L from 'leaflet';
 import '@maplibre/maplibre-gl-leaflet';
+// Adds the `offset` polyline option, applied in screen pixels and recomputed
+// on zoom. Baking the offset into the coordinates instead would make the lanes
+// invisible at city zoom (8 m is a third of a pixel at z12).
+import 'leaflet-polylineoffset';
 import type { Station } from '~/types/station';
 import type { Vehicle } from '~/composables/useVehiclePositions';
 import type { Route } from '~/data/routes';
+import type { TrackCorridor } from '~/types/track';
 
 const props = defineProps<{
   stations: Station[];
   routes: Route[];
+  tracks: TrackCorridor[];
   lineColors: Record<string, string>;
   tramLineIds: string[];
   center: [number, number];
@@ -114,6 +120,56 @@ function flyHome() {
   map.flyTo(homeView.center, homeView.zoom, { duration: 1 });
 }
 
+// Sideways gap between two lines sharing a stretch of track, in screen pixels.
+const LANE_PX = 4;
+
+function addPolyline(polyline: L.Polyline, lines: string[]) {
+  if (lines.every(l => tramLineSet.value.has(l))) {
+    tramPolylines.push(polyline);
+    if (props.tramsIncluded) polyline.addTo(map);
+  } else {
+    polyline.addTo(map);
+  }
+}
+
+// Real track geometry, drawn once per line sharing each corridor and fanned
+// out into parallel lanes — otherwise the lines that run together through
+// central Göteborg would stack exactly and only the topmost colour would show.
+function drawTracks() {
+  props.tracks.forEach(corridor => {
+    const lanes = corridor.lines.length;
+    corridor.lines.forEach((line, i) => {
+      addPolyline(L.polyline(corridor.coords, {
+        color: props.lineColors[line] ?? '#888',
+        weight: 4,
+        opacity: 0.65,
+        offset: (i - (lanes - 1) / 2) * LANE_PX,
+        interactive: false,
+      } as L.PolylineOptions), [line]);
+    });
+  });
+
+  // Fall back to the old straight station-to-station line for anything the
+  // generated data does not cover, so a failed regeneration degrades instead
+  // of blanking the map.
+  const covered = new Set(props.tracks.flatMap(c => c.lines));
+  const stationById = new Map(props.stations.map(s => [s.id, s]));
+  props.routes.forEach(route => {
+    if (covered.has(route.line)) return;
+    const coords = route.stationIds
+      .map(id => stationById.get(id))
+      .filter((s): s is Station => !!s)
+      .map(s => [s.lat, s.lng] as [number, number]);
+    if (coords.length < 2) return;
+    addPolyline(L.polyline(coords, {
+      color: props.lineColors[route.line] ?? '#888',
+      weight: 4,
+      opacity: 0.65,
+      interactive: false,
+    }), [route.line]);
+  });
+}
+
 onMounted(async() => {
   await nextTick();
   if (!mapEl.value) return;
@@ -137,28 +193,7 @@ onMounted(async() => {
     attributionControl: false,
   }).addTo(map);
 
-  const stationById = new Map(props.stations.map(s => [s.id, s]));
-  props.routes.forEach(route => {
-    const coords = route.stationIds
-      .map(id => stationById.get(id))
-      .filter((s): s is Station => !!s)
-      .map(s => [s.lat, s.lng] as [number, number]);
-    if (coords.length >= 2) {
-      const color = props.lineColors[route.line] ?? '#888';
-      const polyline = L.polyline(coords, {
-        color,
-        weight: 4,
-        opacity: 0.65,
-        interactive: false,
-      });
-      if (tramLineSet.value.has(route.line)) {
-        tramPolylines.push(polyline);
-        if (props.tramsIncluded) polyline.addTo(map);
-      } else {
-        polyline.addTo(map);
-      }
-    }
-  });
+  drawTracks();
 
   props.stations.forEach(station => {
     const marker = L.circleMarker([station.lat, station.lng], normalStyle(station.line));

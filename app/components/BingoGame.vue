@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { cityConfigs, getCityStations, getCityRoutes } from '~/data/cities';
+import { cityConfigs, getCityStations, getCityRoutes, getCityTracks } from '~/data/cities';
 import { createTravelTimeGraph, createStopsGraph, findNearestStation } from '~/utils/travelTime';
 import type { CityId } from '~/types/city';
 import type { Station } from '~/types/station';
@@ -16,6 +16,7 @@ const colorMode = useColorMode();
 const cityConfig = computed(() => cityConfigs[props.cityId]);
 const cityStations = computed(() => getCityStations(props.cityId));
 const cityRoutes = computed(() => getCityRoutes(props.cityId));
+const cityTrackCorridors = computed(() => getCityTracks(props.cityId));
 
 const lineColors = computed<Record<string, string>>(() =>
   Object.fromEntries(cityConfig.value.lines.map(l => [l.id, l.color]))
@@ -416,6 +417,7 @@ const citySubtitle = computed(() => t(cityConfig.value.subtitleKey));
       <BingoMap
         :stations="cityStations"
         :routes="cityRoutes"
+        :tracks="cityTrackCorridors"
         :line-colors="lineColors"
         :tram-line-ids="cityConfig.tramLineIds"
         :center="cityConfig.center"

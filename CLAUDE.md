@@ -41,7 +41,14 @@ Path aliases `~` and `@` both resolve to `app/`.
 Key files:
 - `app/assets/css/main.css` — Tailwind v4 + Nuxt UI CSS entry point (required for styles to load)
 - `app/data/stations.ts` — all ~100 Stockholm T-bana stations with OSM-accurate lat/lng, grouped by line
-- `app/data/routes.ts` — ordered station ID arrays per branch, used to draw polylines on the map
+- `app/data/routes.ts` — ordered station ID arrays per branch, used for the travel-time graph
+  (the map no longer draws from this — see `tracks.ts` — but it is still the adjacency source)
+- `app/data/tracks.ts` — AUTO-GENERATED real track geometry from OSM route relations.
+  Regenerate with `npm run tracks` (`scripts/fetch-tracks.mjs`); never hand-edit.
+  Grouped into *corridors*: one entry per continuous stretch of track, listing every line that runs
+  over it. In Göteborg each stretch carries 2.6 lines on average, so the map draws each corridor
+  once per line and offsets them into parallel lanes (`leaflet-polylineoffset`, screen pixels, so
+  the spacing holds at every zoom). Lane order comes from the legend order in `cities.ts`.
 - `app/data/venues.ts` — AUTO-GENERATED nearby bars/pubs/cafés/restaurants per station.
   Regenerate with `npm run venues` (`scripts/fetch-venues.mjs`); never hand-edit.
   Pre-baked deliberately: live Overpass calls were unreliable, and one mirror returns 200 OK with an empty body (see README)
