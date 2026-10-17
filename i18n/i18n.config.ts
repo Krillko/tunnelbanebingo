@@ -5,6 +5,8 @@ export default defineI18nConfig(() => ({
       app: {
         subtitle: 'Slumpa en station på Stockholms tunnelbana / Spårvägar',
         signInGoogle: 'Logga in med Google',
+        soundOn: 'Ljud på',
+        soundOff: 'Ljud av',
       },
       cities: {
         stockholm: {
@@ -25,6 +27,7 @@ export default defineI18nConfig(() => ({
         description: 'Stationer nära hemmet lottas oftare — långt bort är fortfarande möjligt, bara ovanligare. Du kan ändra detta när som helst i Inställningar.',
         stationPlaceholder: 'Sök station…',
         includeRailways: 'Inkludera spårvägar (Tvärbanan & Spårväg City)',
+        enableSound: 'Spela ljudeffekter',
         confirm: 'Välj hemstation',
         skip: 'Gör det senare (i Inställningar)',
       },
@@ -68,6 +71,9 @@ export default defineI18nConfig(() => ({
         railways: 'Spårvägar',
         railwaysHint: 'Inkludera Tvärbanan och Spårväg City i lottningen.',
         includeRailways: 'Inkludera spårvägar',
+        sound: 'Ljud',
+        soundHint: 'Spela kasinoklick när stationen lottas. På iPhone måste ljudet slås på här innan Safari släpper fram det — och telefonen får inte stå i tyst läge.',
+        enableSound: 'Spela ljudeffekter',
         visitedStations: 'Besökta stationer',
         visitedHint: 'Besökta stationer utesluts ur lottningen.',
         visitedCount: '{visited} av {total} besökta.',
@@ -124,6 +130,8 @@ export default defineI18nConfig(() => ({
       app: {
         subtitle: 'Spin a random station on Stockholm\'s metro / tram network',
         signInGoogle: 'Sign in with Google',
+        soundOn: 'Sound on',
+        soundOff: 'Sound off',
       },
       cities: {
         stockholm: {
@@ -144,6 +152,7 @@ export default defineI18nConfig(() => ({
         description: 'Stations near home are drawn more often — far-away stations are still possible, just less likely. You can change this any time in Settings.',
         stationPlaceholder: 'Search station…',
         includeRailways: 'Include trams (Tvärbanan & Spårväg City)',
+        enableSound: 'Play sound effects',
         confirm: 'Set home station',
         skip: 'Do this later (in Settings)',
       },
@@ -187,6 +196,9 @@ export default defineI18nConfig(() => ({
         railways: 'Trams',
         railwaysHint: 'Include Tvärbanan and Spårväg City in the draw.',
         includeRailways: 'Include trams',
+        sound: 'Sound',
+        soundHint: 'Play casino clicks while the station is drawn. On iPhone, sound has to be switched on here before Safari will allow it — and the phone must not be on silent.',
+        enableSound: 'Play sound effects',
         visitedStations: 'Visited stations',
         visitedHint: 'Visited stations are excluded from the draw.',
         visitedCount: '{visited} of {total} visited.',

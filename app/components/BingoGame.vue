@@ -33,7 +33,21 @@ const { visitedSet, toggle, markVisited } = useVisitedStations(props.cityId);
 const { homeStationId, setHome } = useHomeStation(props.cityId);
 const { hasOnboarded, markOnboarded } = useOnboarding(props.cityId);
 const { tramsIncluded, setTramsIncluded } = useTramsIncluded(props.cityId);
+const { soundEnabled, setSoundEnabled } = useSoundEnabled();
+const { unlock: unlockSound, playTick } = useTickSound();
 const { vehicles } = useVehiclePositions();
+
+// iOS Safari only lets audio start from inside a user gesture, so flipping the
+// toggle on is the moment we create and resume the AudioContext. The short
+// confirmation tick doubles as proof to the user that it actually worked.
+function applySoundEnabled(value: boolean) {
+  setSoundEnabled(value);
+  if (value) unlockSound().then(() => playTick(1000));
+}
+
+function toggleSound() {
+  applySoundEnabled(!soundEnabled.value);
+}
 
 const tramLineSet = computed(() => new Set(cityConfig.value.tramLineIds));
 
@@ -199,6 +213,10 @@ const nearMeMessage = ref<string | null>(null);
 async function handleFindNearMe() {
   if (animationState.value !== 'idle' || nearMeLoading.value) return;
 
+  // Unlock before the first await — once we resume after the geolocation
+  // promise we're no longer inside the user gesture Safari requires.
+  unlockSound();
+
   nearMeMessage.value = null;
   nearMeLoading.value = true;
   trackEvent('near-me', 'Find near me pressed');
@@ -335,6 +353,12 @@ const citySubtitle = computed(() => t(cityConfig.value.subtitleKey));
           class="mt-4"
           @update:model-value="setTramsIncluded"
         />
+        <UCheckbox
+          :model-value="soundEnabled"
+          :label="t('onboarding.enableSound')"
+          :class="cityConfig.hasTramToggle ? 'mt-2' : 'mt-4'"
+          @update:model-value="applySoundEnabled"
+        />
       </template>
       <template #footer>
         <div class="flex flex-col gap-2 w-full">
@@ -452,6 +476,15 @@ const citySubtitle = computed(() => t(cityConfig.value.subtitleKey));
           >
             🇸🇪 ⇄ 🇬🇧
           </UButton>
+          <UButton
+            size="xs"
+            variant="ghost"
+            color="neutral"
+            :icon="soundEnabled ? 'i-heroicons-speaker-wave' : 'i-heroicons-speaker-x-mark'"
+            :title="soundEnabled ? t('app.soundOn') : t('app.soundOff')"
+            :aria-label="soundEnabled ? t('app.soundOn') : t('app.soundOff')"
+            @click="toggleSound"
+          />
           <UButton
             size="xs"
             variant="ghost"
@@ -726,6 +759,24 @@ const citySubtitle = computed(() => t(cityConfig.value.subtitleKey));
 
           <USeparator />
         </template>
+
+        <!-- Sound -->
+        <div>
+          <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+            {{ t('settings.sound') }}
+          </p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            {{ t('settings.soundHint') }}
+          </p>
+          <UCheckbox
+            :model-value="soundEnabled"
+            :label="t('settings.enableSound')"
+            class="mt-2"
+            @update:model-value="applySoundEnabled"
+          />
+        </div>
+
+        <USeparator />
 
         <div>
           <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
