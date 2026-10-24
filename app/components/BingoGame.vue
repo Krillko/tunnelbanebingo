@@ -76,6 +76,13 @@ const { animationState, currentHighlight, winner, animationTarget, startBingo, r
 
 const { trackEvent } = useGoatCounter();
 
+const { canInstall, canPrompt, install } = useInstallApp();
+
+async function installApp() {
+  trackEvent('install-app', 'Install app pressed');
+  await install();
+}
+
 const { venues, fetchVenues, clear: clearVenues } = useNearbyVenues();
 
 watch(winner, (w) => {
@@ -707,6 +714,44 @@ const citySubtitle = computed(() => t(cityConfig.value.subtitleKey));
 
       <!-- Settings tab -->
       <div v-else class="flex flex-col gap-5">
+        <!-- Add to home screen. Chrome gets a real install button; iOS only
+             gets instructions, because Safari has no install API. -->
+        <template v-if="canInstall">
+          <div>
+            <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+              {{ t('install.title') }}
+            </p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              {{ t('install.hint') }}
+            </p>
+            <UButton
+              v-if="canPrompt"
+              size="sm"
+              variant="outline"
+              leading-icon="i-heroicons-arrow-down-tray"
+              class="mt-2"
+              @click="installApp"
+            >
+              {{ t('install.button') }}
+            </UButton>
+            <template v-else>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                {{ t('install.iosIntro') }}
+              </p>
+              <ol class="mt-1 space-y-1 text-xs text-gray-500 dark:text-gray-400 list-decimal list-inside">
+                <li>
+                  {{ t('install.iosStep1') }}
+                  <UIcon name="i-heroicons-arrow-up-on-square" class="size-3.5 align-text-bottom" />
+                </li>
+                <li>{{ t('install.iosStep2') }}</li>
+                <li>{{ t('install.iosStep3') }}</li>
+              </ol>
+            </template>
+          </div>
+
+          <USeparator />
+        </template>
+
         <div>
           <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
             {{ t('settings.homeStation') }}

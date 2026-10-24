@@ -79,6 +79,15 @@ export default defineI18nConfig(() => ({
         visitedHint: 'Besökta stationer utesluts ur lottningen.',
         visitedCount: '{visited} av {total} besökta.',
       },
+      install: {
+        title: 'Lägg till på hemskärmen',
+        hint: 'Spara Tunnelbanebingo som en app. Den öppnas i helskärm, utan webbläsarens adressfält.',
+        button: 'Installera appen',
+        iosIntro: 'Så här gör du i Safari på iPhone och iPad:',
+        iosStep1: 'Tryck på Dela-knappen i verktygsfältet.',
+        iosStep2: 'Scrolla ner och välj "Lägg till på hemskärmen".',
+        iosStep3: 'Tryck på "Lägg till" uppe till höger.',
+      },
       lines: {
         stockholm: {
           red: 'Röda linjen',
@@ -206,6 +215,15 @@ export default defineI18nConfig(() => ({
         visitedStations: 'Visited stations',
         visitedHint: 'Visited stations are excluded from the draw.',
         visitedCount: '{visited} of {total} visited.',
+      },
+      install: {
+        title: 'Add to home screen',
+        hint: 'Save Subway Bingo as an app. It opens full screen, without the browser address bar.',
+        button: 'Install app',
+        iosIntro: 'In Safari on iPhone and iPad:',
+        iosStep1: 'Tap the Share button in the toolbar.',
+        iosStep2: 'Scroll down and choose "Add to Home Screen".',
+        iosStep3: 'Tap "Add" in the top right.',
       },
       lines: {
         stockholm: {
