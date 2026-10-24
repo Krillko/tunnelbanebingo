@@ -42,14 +42,18 @@ function winnerStyle(line: string): L.CircleMarkerOptions {
   return { radius: 14, fillColor: props.lineColors[line] ?? '#888', color: '#FFD700', weight: 4, fillOpacity: 1, interactive: true };
 }
 
-const vehicleStyle: L.CircleMarkerOptions = {
-  radius: 4,
-  fillColor: '#1F2937',
-  color: '#fff',
-  weight: 1.5,
-  fillOpacity: 0.9,
-  interactive: false,
-};
+// Trains on a cancelled or added trip are the only ones the feed names a line
+// for, so most dots fall back to neutral dark grey.
+function vehicleStyle(line: Vehicle['line']): L.CircleMarkerOptions {
+  return {
+    radius: 4,
+    fillColor: (line && props.lineColors[line]) || '#1F2937',
+    color: '#fff',
+    weight: 1.5,
+    fillOpacity: 0.9,
+    interactive: false,
+  };
+}
 
 function buildStationPopup(station: Station, marker: L.CircleMarker): HTMLElement {
   const wrapper = document.createElement('div');
@@ -81,7 +85,18 @@ const mapEl = useTemplateRef<HTMLDivElement>('mapEl');
 let map: L.Map;
 let glLayer: L.MaplibreGL | null = null;
 const markerMap = new Map<string, L.CircleMarker>();
-const vehicleMarkers = new Map<string, L.CircleMarker>();
+// A poll hands us a train's position every 15 s, and Leaflet would snap the
+// dot straight to it. Keeping the previous position lets each dot glide to the
+// new one instead, which reads as movement rather than as a redraw.
+const VEHICLE_GLIDE_MS = 2000;
+interface VehicleTrack {
+  marker: L.CircleMarker;
+  from: L.LatLngLiteral;
+  to: L.LatLngLiteral;
+  start: number;
+}
+const vehicleMarkers = new Map<string, VehicleTrack>();
+let vehicleFrame: number | null = null;
 const checkmarkMarkers = new Map<string, L.Marker>();
 const tramPolylines: L.Polyline[] = [];
 
@@ -222,6 +237,8 @@ onMounted(async() => {
   });
   resizeObserver.observe(mapEl.value);
 
+  syncVehicles(props.vehicles);
+
   emit('ready');
 });
 
@@ -279,32 +296,57 @@ watch(() => props.tramsIncluded, (included) => {
 onUnmounted(() => {
   resizeObserver?.disconnect();
   checkmarkMarkers.clear();
+  if (vehicleFrame !== null) cancelAnimationFrame(vehicleFrame);
+  vehicleMarkers.clear();
   map?.remove();
 });
 
-watch(() => props.vehicles, (newVehicles) => {
+function stepVehicles(now: number) {
+  let moving = false;
+  vehicleMarkers.forEach(track => {
+    const t = Math.min(1, (now - track.start) / VEHICLE_GLIDE_MS);
+    const eased = t * (2 - t);
+    track.marker.setLatLng([
+      track.from.lat + (track.to.lat - track.from.lat) * eased,
+      track.from.lng + (track.to.lng - track.from.lng) * eased,
+    ]);
+    if (t < 1) moving = true;
+  });
+  vehicleFrame = moving ? requestAnimationFrame(stepVehicles) : null;
+}
+
+function syncVehicles(newVehicles: Vehicle[]) {
   if (!map) return;
 
   const seen = new Set<string>();
+  const now = performance.now();
 
   newVehicles.forEach(v => {
     seen.add(v.id);
     const existing = vehicleMarkers.get(v.id);
     if (existing) {
-      existing.setLatLng([v.lat, v.lng]);
+      existing.from = existing.marker.getLatLng();
+      existing.to = { lat: v.lat, lng: v.lng };
+      existing.start = now;
+      existing.marker.setStyle(vehicleStyle(v.line));
     } else {
-      const m = L.circleMarker([v.lat, v.lng], vehicleStyle).addTo(map);
-      vehicleMarkers.set(v.id, m);
+      const marker = L.circleMarker([v.lat, v.lng], vehicleStyle(v.line)).addTo(map);
+      const at = { lat: v.lat, lng: v.lng };
+      vehicleMarkers.set(v.id, { marker, from: at, to: at, start: now });
     }
   });
 
-  vehicleMarkers.forEach((marker, id) => {
+  vehicleMarkers.forEach((track, id) => {
     if (!seen.has(id)) {
-      marker.remove();
+      track.marker.remove();
       vehicleMarkers.delete(id);
     }
   });
-});
+
+  if (vehicleFrame === null) vehicleFrame = requestAnimationFrame(stepVehicles);
+}
+
+watch(() => props.vehicles, syncVehicles);
 
 watch(() => props.highlightedId, (newId, oldId) => {
   if (oldId && oldId !== props.winnerId) {

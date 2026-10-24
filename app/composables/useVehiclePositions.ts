@@ -1,19 +1,26 @@
+import type { CityId } from '~/types/city';
+
 export interface Vehicle {
   id: string;
   lat: number;
   lng: number;
-  routeId: string | null;
+  line: 'red' | 'green' | 'blue' | null;
 }
 
 const POLL_INTERVAL_MS = 15_000;
 
-export function useVehiclePositions() {
+// The feed is Stockholm's (SL) only, so Göteborg gets nothing to draw.
+export function useVehiclePositions(cityId: MaybeRefOrGetter<CityId>) {
   const vehicles = ref<Vehicle[]>([]);
   const { trafiklabEnabled } = useRuntimeConfig().public;
 
   if (!trafiklabEnabled) return { vehicles };
 
   async function refresh() {
+    if (toValue(cityId) !== 'stockholm') {
+      vehicles.value = [];
+      return;
+    }
     try {
       vehicles.value = await $fetch<Vehicle[]>('/api/vehicles');
     } catch {

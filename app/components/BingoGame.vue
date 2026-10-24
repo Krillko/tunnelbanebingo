@@ -36,7 +36,7 @@ const { hasOnboarded, markOnboarded } = useOnboarding(props.cityId);
 const { tramsIncluded, setTramsIncluded } = useTramsIncluded(props.cityId);
 const { soundEnabled, setSoundEnabled } = useSoundEnabled();
 const { unlock: unlockSound, playTick } = useTickSound();
-const { vehicles } = useVehiclePositions();
+const { vehicles } = useVehiclePositions(() => props.cityId);
 
 // These two take UCheckbox's `boolean | 'indeterminate'` emit; neither checkbox
 // is tri-state, so the value collapses to a plain boolean.
