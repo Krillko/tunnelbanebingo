@@ -15,6 +15,8 @@ useHead({
     { rel: 'icon', type: 'image/png', sizes: '32x32', href: asset('favicon/favicon-32x32.png') },
     { rel: 'icon', type: 'image/png', sizes: '16x16', href: asset('favicon/favicon-16x16.png') },
     { rel: 'apple-touch-icon', sizes: '180x180', href: asset('favicon/apple-touch-icon.png') },
+    // @vite-pwa/nuxt generates manifest.webmanifest but relies on Vite's
+    // index.html transform to link it, which Nuxt never runs — so link it here.
     { rel: 'manifest', href: asset('manifest.webmanifest') },
   ],
   meta: [
@@ -33,5 +35,6 @@ useHead({
 <template>
   <UApp>
     <NuxtPage />
+    <PwaUpdatePrompt />
   </UApp>
 </template>

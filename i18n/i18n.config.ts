@@ -79,6 +79,12 @@ export default defineI18nConfig(() => ({
         visitedHint: 'Besökta stationer utesluts ur lottningen.',
         visitedCount: '{visited} av {total} besökta.',
       },
+      pwa: {
+        updateAvailable: 'En ny version finns',
+        updateHint: 'Ladda om för att uppdatera appen.',
+        reload: 'Ladda om',
+        later: 'Senare',
+      },
       install: {
         title: 'Lägg till på hemskärmen',
         hint: 'Spara Tunnelbanebingo som en app. Den öppnas i helskärm, utan webbläsarens adressfält.',
@@ -215,6 +221,12 @@ export default defineI18nConfig(() => ({
         visitedStations: 'Visited stations',
         visitedHint: 'Visited stations are excluded from the draw.',
         visitedCount: '{visited} of {total} visited.',
+      },
+      pwa: {
+        updateAvailable: 'A new version is available',
+        updateHint: 'Reload to update the app.',
+        reload: 'Reload',
+        later: 'Later',
       },
       install: {
         title: 'Add to home screen',
